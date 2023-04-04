@@ -21,21 +21,26 @@ pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) ->
                     format!("connected successfully to port: {}", port).as_str(),
                 )
                 .await;
+                for i in 1..100000000 {
+                    let msg = format!("Hello World! ({})\r\n", i);
 
-                let msg = b"Hello World!\r\n";
-
-                stream.write(msg).unwrap();
-
-                print_message(stdout_rw_lock.clone(), 6, format!("Message sent").as_str()).await;
+                    stream.write(msg.as_bytes()).unwrap();
+                    print_message(
+                        stdout_rw_lock.clone(),
+                        6,
+                        format!("Message sent: {}", msg).as_str(),
+                    )
+                    .await;
+                }
 
                 let mut data = [0 as u8; 14]; // using 6 byte buffer
                 match stream.read_exact(&mut data) {
                     Ok(_) => {
-                        if &data == msg {
-                            // OK!
-                        } else {
-                            let text = from_utf8(&data).unwrap();
-                        }
+                        // if &data == msg {
+                        //     // OK!
+                        // } else {
+                        let text = from_utf8(&data).unwrap();
+                        // }
                     }
                     Err(e) => {
                         // ERROR

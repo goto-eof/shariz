@@ -24,6 +24,8 @@ async fn main() {
     let server = run_server(&config, stdout_rw_lock.clone());
 
     let client = run_client(&config, stdout_rw_lock.clone());
-
-    let results = futures::future::join(client, server).await;
+    server.await;
+    client.await;
+    // let results = futures::future::join(server, client).await;
+    loop {}
 }
