@@ -23,7 +23,8 @@ pub async fn print_message(stdout_rw_lock: Arc<RwLock<Stdout>>, line: u16, messa
         stdout,
         cursor::MoveTo(0, line),
         terminal::Clear(terminal::ClearType::UntilNewLine),
-        style::PrintStyledContent(message.green())
+        style::PrintStyledContent(message.green()),
+        cursor::MoveTo(0, 0),
     );
     if result.is_err() {
         // do nothing

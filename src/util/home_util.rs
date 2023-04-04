@@ -34,4 +34,6 @@ pub async fn print_header(stdout_rw_lock: Arc<RwLock<Stdout>>, config: &Config) 
         format!("shared directory: {}", config.shared_directory).as_str(),
     )
     .await;
+
+
 }
