@@ -22,10 +22,10 @@ async fn main() {
     print_header(stdout_rw_lock.clone(), &config).await;
 
     let server = run_server(&config, stdout_rw_lock.clone());
-
     let client = run_client(&config, stdout_rw_lock.clone());
+
     server.await;
     client.await;
-    // let results = futures::future::join(server, client).await;
+
     loop {}
 }
