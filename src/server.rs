@@ -39,11 +39,18 @@ pub async fn run_server(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) {
     drop(listener);
 }
 
-pub async fn receive_data(stdout_rw_lock: Arc<RwLock<Stdout>>, mut stream: TcpStream) {
+pub async fn receive_data(stdout_rw_lock: Arc<RwLock<Stdout>>, stream: TcpStream) {
     let reader = BufReader::new(&stream);
     let mut lines = reader.lines();
 
     while let Some(line) = lines.next() {
         let line = line.unwrap();
+
+        print_message(
+            stdout_rw_lock.clone(),
+            5,
+            format!("received: {}", line).as_str(),
+        )
+        .await;
     }
 }
