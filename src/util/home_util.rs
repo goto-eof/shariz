@@ -27,4 +27,11 @@ pub async fn print_header(stdout_rw_lock: Arc<RwLock<Stdout>>, config: &Config) 
         format!("self port: {}", config.self_port).as_str(),
     )
     .await;
+
+    print_message(
+        stdout_rw_lock.clone(),
+        7,
+        format!("shared directory: {}", config.shared_directory).as_str(),
+    )
+    .await;
 }
