@@ -5,6 +5,7 @@
 /___/_//_/\_,_/_/ /_//__/
                          
 ```
+# Shariz is a Work In Progress project
 
 # What is Shariz?
 Shariz, like dropbox, is a file sharing application implemented in Rust. For now it will allow to share files between 2 computers on the same network.

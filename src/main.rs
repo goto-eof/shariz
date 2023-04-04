@@ -4,10 +4,7 @@ use std::{
 };
 
 use crate::util::home_util::print_header;
-use crate::{
-    service::console_service::{clear_console, print_message},
-    structures::config::Config,
-};
+use crate::{service::console_service::print_message, structures::config::Config};
 use config_file::FromConfigFile;
 mod service;
 mod structures;
