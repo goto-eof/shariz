@@ -1,0 +1,5 @@
+{
+  "target_ip": "127.0.0.1",
+  "target_port": 9001,
+  "self_port": 9001
+}
