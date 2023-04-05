@@ -12,6 +12,7 @@ Shariz, like dropbox, is a file sharing application. Shariz was implemented in R
 
 # How it works?
 At startup Shariz loads the target server ip and port from the configuration file and creates a client that will connect to the target server. Menwhile it makes a connection with the target application, requests for files and download them.
+
 ![shariz flow](flow.png)
 
 # Screenshot
