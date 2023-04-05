@@ -16,4 +16,4 @@ At startup Shariz loads the target server ip and port from the configuration fil
 ![shariz flow](flow.png)
 
 # Screenshot
-no screenshot
+![shariz flow](screenshot.png)
