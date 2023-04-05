@@ -1,6 +1,12 @@
-use crate::{service::console_service::print_message, structures::config::Config};
+use crate::{
+    service::{
+        console_service::print_message,
+        processors::{process_pull::PullProcessor, processor_ll::LLProcessor},
+    },
+    structures::{command_processor::CommandProcessorType, config::Config},
+};
 use std::{
-    io::{BufRead, BufReader, Stdout},
+    io::{BufRead, BufReader, Stdout, Write},
     net::{TcpListener, TcpStream},
     sync::{Arc, RwLock},
 };
@@ -44,7 +50,7 @@ pub async fn run_server(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) {
     });
 }
 
-pub async fn receive_data(stdout_rw_lock: Arc<RwLock<Stdout>>, stream: TcpStream) {
+pub async fn receive_data(stdout_rw_lock: Arc<RwLock<Stdout>>, mut stream: TcpStream) {
     let reader = BufReader::new(&stream);
     let mut lines = reader.lines();
 
@@ -54,8 +60,17 @@ pub async fn receive_data(stdout_rw_lock: Arc<RwLock<Stdout>>, stream: TcpStream
         print_message(
             stdout_rw_lock.clone(),
             5,
-            format!("received: {}", line).as_str(),
+            format!("server received: {}", line).as_str(),
         )
         .await;
+        let mut stream = &stream;
+        stream.write("halo".as_bytes()).unwrap();
     }
+}
+
+pub fn prepare_command_processors() -> Vec<CommandProcessorType> {
+    let mut processors: Vec<CommandProcessorType> = Vec::new();
+    processors.push(Box::new(LLProcessor {}));
+    processors.push(Box::new(PullProcessor {}));
+    return processors;
 }

@@ -36,11 +36,13 @@ pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) ->
                 let mut data = [0 as u8; 14]; // using 6 byte buffer
                 match stream.read_exact(&mut data) {
                     Ok(_) => {
-                        // if &data == msg {
-                        //     // OK!
-                        // } else {
                         let text = from_utf8(&data).unwrap();
-                        // }
+                        print_message(
+                            stdout_rw_lock.clone(),
+                            7,
+                            format!("server response: {}", text).as_str(),
+                        )
+                        .await;
                     }
                     Err(e) => {
                         // ERROR

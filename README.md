@@ -11,7 +11,8 @@
 Shariz, like dropbox, is a file sharing application. Shariz was implemented in Rust. For now it will allow to share files between 2 computers on the same network.
 
 # How it works?
-At startup Shariz loads the target server ip and port from the configuration file and creates a client that will connect to the target server. Menwhile it scans the directory configured in the configuration file and searches for files. If there are new files, then Shariz will send those files to the target server. Shariz acts as server and as client.
+At startup Shariz loads the target server ip and port from the configuration file and creates a client that will connect to the target server. Menwhile it makes a connection with the target application, requests for files and download them.
+!(shariz flow)[flow.png]
 
 # Screenshot
 no screenshot
