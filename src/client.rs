@@ -4,30 +4,28 @@ use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{Shutdown, TcpStream};
 use std::path::Path;
-use std::time::{self, Duration};
-use std::{
-    io::Stdout,
-    sync::{Arc, RwLock},
-};
+use std::time::Duration;
 
 use tokio::task::JoinHandle;
 
-pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) -> JoinHandle<()> {
+pub async fn run_client(config: &Config) -> JoinHandle<()> {
     let address = format!("{}:{}", config.target_ip, config.target_port);
     let shared_directory = config.shared_directory.clone();
+    let rd_timeout = config.client_rd_timeout;
+    let wr_timeout = config.client_wr_timeout;
     tokio::spawn(async move {
         let connection = TcpStream::connect(address);
 
         if connection.is_ok() {
             let stream = connection.unwrap();
-            let result_rt = stream.set_read_timeout(Some(Duration::from_millis(10000)));
+            let result_rt = stream.set_read_timeout(Some(Duration::from_millis(rd_timeout)));
             if result_rt.is_err() {
                 let result_shutdown = stream.shutdown(Shutdown::Both);
                 if result_shutdown.is_err() {
                     println!("shutdown error");
                 }
             }
-            let result_wt = stream.set_write_timeout(Some(Duration::from_millis(10000)));
+            let result_wt = stream.set_write_timeout(Some(Duration::from_millis(wr_timeout)));
             if result_wt.is_err() {
                 let result_shutdown = stream.shutdown(Shutdown::Both);
                 if result_shutdown.is_err() {
@@ -44,8 +42,11 @@ pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) ->
                 if file.trim().len() > 0 {
                     make_pull_request(file.as_str(), &mut cloned_stream);
 
-                    let (file_size, file_hash) = size_sha2_request(&stream);
-
+                    let opt_file_size_hash = size_sha2_request(&stream);
+                    if opt_file_size_hash.is_none() {
+                        send_ko(&mut cloned_stream);
+                    }
+                    let (file_size, file_hash) = opt_file_size_hash.unwrap();
                     let (fname, file_to_save) =
                         calculate_file_to_save(file.as_str(), &shared_directory);
 
@@ -55,16 +56,13 @@ pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) ->
                         || calculate_file_hash(&file_to_save) != file_hash
                     {
                         send_data_request(&mut cloned_stream);
-
                         let buffer = extract_file_from_stream(file_size, &mut cloned_stream);
-
                         override_file(buffer, &shared_directory, fname);
                     } else {
                         send_ko(&mut cloned_stream);
                     }
                 }
             }
-            println!("Finished....");
             let result_shutdown = stream.shutdown(Shutdown::Both);
             if result_shutdown.is_err() {
                 println!("shutdown error");
@@ -78,53 +76,64 @@ pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) ->
 }
 
 fn send_ko(cloned_stream: &mut TcpStream) {
-    cloned_stream.write("KO\r\n".as_bytes());
+    let write_result = cloned_stream.write("KO\r\n".as_bytes());
+    if write_result.is_err() {
+        println!("can't send respond to server: {:?}", write_result);
+    }
 }
 
 fn read_file_list(stream: &TcpStream) -> Vec<String> {
     let mut response = String::new();
     let mut conn = BufReader::new(stream);
-    conn.read_line(&mut response);
-    let result = response;
-    let file_list = result.split(",");
-    let count = file_list.clone().count();
-    println!("received vector: {:?} - count: {}", file_list, count);
-    file_list
-        .collect::<Vec<&str>>()
-        .into_iter()
-        .map(|item| item.to_string())
-        .collect()
+    let read_result = conn.read_line(&mut response);
+    if read_result.is_ok() {
+        let result = response;
+        let file_list = result.split(",");
+        let count = file_list.clone().count();
+        println!("received vector: {:?} - count: {}", file_list, count);
+        return file_list
+            .collect::<Vec<&str>>()
+            .into_iter()
+            .map(|item| item.to_string())
+            .collect();
+    }
+    return Vec::new();
 }
 
 fn request_for_file_list(stream: &mut TcpStream) {
     let msg = format!("ll \r\n");
-    if stream.write_all(msg.as_bytes()).is_ok() {}
+    let write_result = stream.write_all(msg.as_bytes());
+    if write_result.is_err() {
+        println!("error in writing response: {:?}", write_result.err());
+    }
 }
 
 fn override_file(buffer: Vec<u8>, shared_directory: &String, fname: String) {
-    println!(
-        "buffer: {:?}, capacity: {}",
-        buffer.capacity(),
-        buffer.capacity()
-    );
-    println!("client red strem file from server");
-
     let mut file = File::create(format!("{}/{}", shared_directory, fname)).unwrap();
-    println!("writing on file...");
-    file.write_all(&buffer).unwrap();
-    println!("writed on file");
-    let ten_millis = time::Duration::from_millis(1000);
+    let write_result = file.write_all(&buffer);
+    if write_result.is_err() {
+        println!("error writing file: {:?}", write_result.err());
+    }
 }
 
 fn extract_file_from_stream(file_size: u64, stream: &mut TcpStream) -> Vec<u8> {
-    println!("client: wating for server file stream....");
     let mut buffer: Vec<u8> = vec![0; file_size.try_into().unwrap()];
-    stream.read_exact(&mut buffer);
-    buffer
+    let read_result = stream.read_exact(&mut buffer);
+    if read_result.is_ok() {
+        return buffer;
+    }
+    println!("Error reading file from strem: {:?}", read_result.err());
+    return Vec::new();
 }
 
 fn send_data_request(stream: &mut TcpStream) {
-    stream.write("OK\r\n".as_bytes());
+    let write_result = stream.write("OK\r\n".as_bytes());
+    if write_result.is_err() {
+        println!(
+            "error in trying to respond to server: {:?}",
+            write_result.err()
+        );
+    }
 }
 
 fn calculate_file_to_save(file: &str, shared_directory: &String) -> (String, String) {
@@ -133,11 +142,17 @@ fn calculate_file_to_save(file: &str, shared_directory: &String) -> (String, Str
     (fname.to_string(), file_to_save)
 }
 
-fn size_sha2_request(stream: &TcpStream) -> (u64, String) {
+fn size_sha2_request(stream: &TcpStream) -> Option<(u64, String)> {
     let mut reader = BufReader::new(stream);
     let mut buffer = String::new();
-    reader.read_line(&mut buffer);
-    println!("clinet size file: {}", buffer);
+    let read_result = reader.read_line(&mut buffer);
+    if read_result.is_err() {
+        println!(
+            "error in reading file (size, sha2): {:?}",
+            read_result.err()
+        );
+        return None;
+    }
     let mut buffer: Vec<String> = buffer
         .split(";")
         .collect::<Vec<&str>>()
@@ -146,16 +161,13 @@ fn size_sha2_request(stream: &TcpStream) -> (u64, String) {
         .collect();
     let file_size: u64 = buffer.get(0).unwrap().trim().parse().unwrap();
     let file_hash = buffer.get(1).unwrap().trim();
-    println!(
-        "========>file_size: {}, file_hash: {}",
-        &file_size, &file_hash
-    );
-    (file_size, file_hash.to_string())
+    Some((file_size, file_hash.to_string()))
 }
 
 fn make_pull_request(file: &str, stream: &mut TcpStream) {
-    println!("\r\n**************************\r\npulling: {}", file);
     let command = format!("pull;{}\r\n", file);
-    println!("command: {}", command);
-    stream.write_all(command.as_bytes()).unwrap();
+    let write_result = stream.write_all(command.as_bytes());
+    if write_result.is_err() {
+        println!("error in writing pull request: {:?}", write_result.err());
+    }
 }

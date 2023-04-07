@@ -1,6 +1,5 @@
 use crate::client::run_client;
 use crate::server::run_server;
-use crate::util::home_util::print_header;
 use crate::{service::console_service::print_message, structures::config::Config};
 use config_file::FromConfigFile;
 use std::thread;
@@ -19,16 +18,12 @@ mod util;
 async fn main() {
     let config = Config::from_config_file("configuration/configuration.json").unwrap();
 
-    let stdout_rw_lock: Arc<RwLock<Stdout>> = Arc::new(RwLock::new(stdout()));
-
     //print_header(stdout_rw_lock.clone(), &config).await;
 
-    let server = run_server(&config, stdout_rw_lock.clone());
+    run_server(&config).await;
 
-    server.await;
-    println!("yabado");
     loop {
-        let client = run_client(&config, stdout_rw_lock.clone()).await;
-        thread::sleep(Duration::from_millis(5000));
+        run_client(&config).await;
+        thread::sleep(Duration::from_millis(10000));
     }
 }

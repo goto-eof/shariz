@@ -11,7 +11,7 @@ use std::{
     sync::{Arc, Mutex, RwLock},
 };
 
-pub async fn run_server(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) {
+pub async fn run_server(config: &Config) {
     let port = config.self_port;
     let processors: Arc<Mutex<Vec<CommandProcessorType>>> =
         Arc::new(Mutex::new(prepare_command_processors(config)));
@@ -22,19 +22,14 @@ pub async fn run_server(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) {
             let clone = processors.clone();
             match stream {
                 Ok(mut stream) => {
-                    let stdout_rw_lock_clone = stdout_rw_lock.clone();
-                    tokio::spawn(async move {
-                        receive_data(stdout_rw_lock_clone, &mut stream, clone).await
-                    })
-                    .await;
+                    let result_spawn =
+                        tokio::spawn(async move { receive_data(&mut stream, clone).await }).await;
+                    if result_spawn.is_err() {
+                        println!("error spawning handler: {:?}", result_spawn.err());
+                    }
                 }
                 Err(e) => {
-                    print_message(
-                        stdout_rw_lock.clone(),
-                        5,
-                        format!("connection failed: {}", e).as_str(),
-                    )
-                    .await;
+                    println!("stream error: {:?}", e);
                 }
             }
         }
@@ -43,7 +38,6 @@ pub async fn run_server(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) {
 }
 
 pub async fn receive_data(
-    stdout_rw_lock: Arc<RwLock<Stdout>>,
     stream: &mut TcpStream,
     processors: Arc<Mutex<Vec<CommandProcessorType>>>,
 ) {
