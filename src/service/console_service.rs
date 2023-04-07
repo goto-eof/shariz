@@ -21,10 +21,10 @@ pub async fn print_message(stdout: &mut Stdout, line: u16, message: &str) -> () 
         cursor::MoveTo(0, 0),
     );
     if result.is_err() {
-        // do nothing
+        println!("error printing on  console: {:?}", result.err());
     }
     let result = stdout.flush();
     if result.is_err() {
-        // do nothing
+        println!("error printing on  console: {:?}", result.err());
     }
 }
