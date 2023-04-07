@@ -153,7 +153,7 @@ fn size_sha2_request(stream: &TcpStream) -> Option<(u64, String)> {
         );
         return None;
     }
-    let mut buffer: Vec<String> = buffer
+    let buffer: Vec<String> = buffer
         .split(";")
         .collect::<Vec<&str>>()
         .into_iter()

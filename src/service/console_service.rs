@@ -1,7 +1,4 @@
-use std::{
-    io::{Stdout, Write},
-    sync::{Arc, RwLock},
-};
+use std::io::{Stdout, Write};
 
 use crossterm::{
     cursor, queue,
@@ -9,16 +6,13 @@ use crossterm::{
     terminal, QueueableCommand,
 };
 
-pub async fn clear_console(stdout_rw_lock: Arc<RwLock<Stdout>>) -> () {
-    let mut stdout = stdout_rw_lock.write().unwrap();
+pub async fn clear_console(stdout: &mut Stdout) -> () {
     stdout
         .queue(terminal::Clear(terminal::ClearType::All))
         .unwrap();
 }
 
-pub async fn print_message(stdout_rw_lock: Arc<RwLock<Stdout>>, line: u16, message: &str) -> () {
-    let mut stdout = stdout_rw_lock.write().unwrap();
-
+pub async fn print_message(stdout: &mut Stdout, line: u16, message: &str) -> () {
     let result = queue!(
         stdout,
         cursor::MoveTo(0, line),

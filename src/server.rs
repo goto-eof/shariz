@@ -1,14 +1,11 @@
 use crate::{
-    service::{
-        console_service::print_message,
-        processors::{process_pull::PullProcessor, processor_ll::LLProcessor},
-    },
+    service::processors::{process_pull::PullProcessor, processor_ll::LLProcessor},
     structures::{command_processor::CommandProcessorType, config::Config},
 };
 use std::{
-    io::{BufRead, BufReader, Stdout},
+    io::{BufRead, BufReader},
     net::{TcpListener, TcpStream},
-    sync::{Arc, Mutex, RwLock},
+    sync::{Arc, Mutex},
 };
 
 pub async fn run_server(config: &Config) {

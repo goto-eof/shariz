@@ -2,12 +2,10 @@ use crate::client::run_client;
 use crate::server::run_server;
 use crate::{service::console_service::print_message, structures::config::Config};
 use config_file::FromConfigFile;
+use std::io::stdout;
 use std::thread;
 use std::time::Duration;
-use std::{
-    io::{stdout, Stdout},
-    sync::{Arc, RwLock},
-};
+use util::home_util::print_header;
 mod client;
 mod server;
 mod service;
@@ -18,7 +16,7 @@ mod util;
 async fn main() {
     let config = Config::from_config_file("configuration/configuration.json").unwrap();
 
-    //print_header(stdout_rw_lock.clone(), &config).await;
+    print_header(&mut stdout(), &config).await;
 
     run_server(&config).await;
 
