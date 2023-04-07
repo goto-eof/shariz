@@ -5,7 +5,7 @@ use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{Shutdown, TcpStream};
 use std::path::Path;
-use std::time;
+use std::time::{self, Duration};
 use std::{
     io::Stdout,
     sync::{Arc, RwLock},
@@ -21,6 +21,20 @@ pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) ->
 
         if connection.is_ok() {
             let stream = connection.unwrap();
+            let result_rt = stream.set_read_timeout(Some(Duration::from_millis(10000)));
+            if result_rt.is_err() {
+                let result_shutdown = stream.shutdown(Shutdown::Both);
+                if result_shutdown.is_err() {
+                    println!("shutdown error");
+                }
+            }
+            let result_wt = stream.set_write_timeout(Some(Duration::from_millis(10000)));
+            if result_wt.is_err() {
+                let result_shutdown = stream.shutdown(Shutdown::Both);
+                if result_shutdown.is_err() {
+                    println!("shutdown error");
+                }
+            }
             let mut cloned_stream = stream.try_clone().unwrap();
 
             request_for_file_list(&mut cloned_stream);
@@ -52,7 +66,10 @@ pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) ->
                 }
             }
             println!("Finished....");
-            stream.shutdown(Shutdown::Both);
+            let result_shutdown = stream.shutdown(Shutdown::Both);
+            if result_shutdown.is_err() {
+                println!("shutdown error");
+            }
             return ();
         } else {
             println!("connection error");
