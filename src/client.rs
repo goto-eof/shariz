@@ -35,22 +35,11 @@ pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) ->
 
             for file in file_list {
                 if file.trim().len() > 0 {
-                    ///////////////////////////////
-                    /// pull filename.png
-                    ///////////////////////////////
                     println!("\r\n**************************\r\npulling: {}", file);
                     let command = format!("pull {}\r\n", file);
                     println!("command: {}", command);
                     stream.write_all(command.as_bytes()).unwrap();
 
-                    ///////////////////////////////
-                    /// read bytes length
-                    ///////////////////////////////
-                    // let mut buffer = [0; 10];
-                    // let chars = stream.read(&mut buffer);
-                    // let result = String::from_utf8_lossy(&buffer[0..chars.unwrap()]);
-                    // println!("parsed size: [{}]", result.to_string().trim());
-                    // let result: u64 = result.trim().parse().unwrap();
                     let mut reader = BufReader::new(&stream);
                     let mut buffer = String::new();
                     reader.read_line(&mut buffer);
@@ -92,9 +81,6 @@ pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) ->
                         println!("writed on file");
                         let ten_millis = time::Duration::from_millis(1000);
                     }
-                    // else {
-                    //     stream.read_exact(&mut buffer);
-                    // }
                 }
             }
             println!("Finished....");
