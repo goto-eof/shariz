@@ -37,7 +37,7 @@ impl CommandProcessor for PullProcessor {
             // write data
             stream.write_all(&data);
         } else {
-            stream.write("ERROR\r\n".as_bytes());
+            // stream.write("ERROR\r\n".as_bytes());
         }
         return true;
     }
