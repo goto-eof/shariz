@@ -1,10 +1,9 @@
-use std::io::{Stdout, Write};
-
 use crossterm::{
     cursor, queue,
     style::{self, Stylize},
     terminal, QueueableCommand,
 };
+use std::io::{Stdout, Write};
 
 pub async fn clear_console(stdout: &mut Stdout) -> () {
     stdout
