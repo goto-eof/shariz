@@ -1,5 +1,7 @@
 use crate::{
-    service::processors::{process_pull::PullProcessor, processor_ll::LLProcessor},
+    service::processors::{
+        process_pull::PullProcessor, processor_del::DelProcessor, processor_ll::LLProcessor,
+    },
     structures::{command_processor::CommandProcessorType, config::Config},
 };
 use std::{
@@ -71,5 +73,6 @@ pub fn prepare_command_processors(config: &Config) -> Vec<CommandProcessorType> 
     let shared_directory = config.shared_directory.as_str();
     processors.push(Box::new(LLProcessor::new(shared_directory)));
     processors.push(Box::new(PullProcessor::new(shared_directory)));
+    processors.push(Box::new(DelProcessor::new(shared_directory)));
     return processors;
 }
