@@ -14,28 +14,40 @@ impl CommandProcessor for LLProcessor {
     }
 
     fn process(&self, full_command: &str, stream: &mut TcpStream) -> bool {
-        let mut files = "".to_owned();
+        let mut files_string = "".to_owned();
         let mut lenght = 0;
-        for file in fs::read_dir(&self.search_directory).unwrap() {
-            let file = file.unwrap();
+
+        let files_result = fs::read_dir(&self.search_directory);
+        if files_result.is_err() {
+            return false;
+        }
+        let files = files_result.unwrap();
+        for file_result in files {
+            if file_result.is_err() {
+                return false;
+            }
+            let file = file_result.unwrap();
             if !file.path().ends_with(".DS_Store") && !file.path().is_dir() {
-                files = format!(
+                files_string = format!(
                     "{}{},",
-                    files,
+                    files_string,
                     extract_fname(&file.path().to_string_lossy().to_string())
                 );
                 lenght = lenght + 1;
             }
         }
-        println!("{}", files);
-        let files = format!("{}\r\n", files);
-        stream.write_all(files.as_bytes()).unwrap();
+        println!("{}", files_string);
+        let files = format!("{}\r\n", files_string);
+        let write_result = stream.write_all(files.as_bytes());
+        if write_result.is_err() {
+            return false;
+        }
         return true;
     }
 }
 
 impl LLProcessor {
-    fn new(directory: &str) -> Self {
+    pub fn new(directory: &str) -> Self {
         LLProcessor {
             search_directory: directory.to_owned(),
         }

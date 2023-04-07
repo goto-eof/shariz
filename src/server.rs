@@ -58,7 +58,10 @@ pub async fn receive_data(
             let line = line.unwrap();
             for processor in processors.lock().unwrap().iter() {
                 if processor.accept(&line) {
-                    processor.process(&line, &mut stream_clone);
+                    let operation_result = processor.process(&line, &mut stream_clone);
+                    if !operation_result {
+                        println!("failed to execute the `{}` operation", &line);
+                    }
                     break;
                 }
             }
@@ -68,11 +71,8 @@ pub async fn receive_data(
 
 pub fn prepare_command_processors(config: &Config) -> Vec<CommandProcessorType> {
     let mut processors: Vec<CommandProcessorType> = Vec::new();
-    processors.push(Box::new(LLProcessor {
-        search_directory: config.shared_directory.to_owned(),
-    }));
-    processors.push(Box::new(PullProcessor {
-        search_directory: config.shared_directory.to_owned(),
-    }));
+    let shared_directory = config.shared_directory.as_str();
+    processors.push(Box::new(LLProcessor::new(shared_directory)));
+    processors.push(Box::new(PullProcessor::new(shared_directory)));
     return processors;
 }

@@ -139,7 +139,7 @@ fn size_sha2_request(stream: &TcpStream) -> (u64, String) {
 
 fn make_pull_request(file: &str, stream: &mut TcpStream) {
     println!("\r\n**************************\r\npulling: {}", file);
-    let command = format!("pull {}\r\n", file);
+    let command = format!("pull;{}\r\n", file);
     println!("command: {}", command);
     stream.write_all(command.as_bytes()).unwrap();
 }
