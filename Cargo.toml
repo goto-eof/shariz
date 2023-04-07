@@ -7,7 +7,7 @@ authors = ["Andrei Dodu"]
 
 [dependencies]
 # reqwest = { version = "0.11.15"}
-tokio = { version = "1", features = [ "rt", "rt-multi-thread", "macros"] } #
+tokio = { version = "1", features = [ "rt", "rt-multi-thread", "macros", "io-util", "net"] } 
 # select = "0.6.0"
 # rand = "0.8.5"
 config-file = {version = "0.2.3", features=[ "json"]}
@@ -17,3 +17,5 @@ serde = { version = "1.0.158", features = ["derive"] }
 # url-normalizer = "0.2.0"
 crossterm = "0.26.1"
 # futures = "0.3.28"
+bytes = "1.4.0"
+chrono = "0.4.24"

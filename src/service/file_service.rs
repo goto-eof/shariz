@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read};
+use std::{fs::File, io::Read, path::Path};
 
 pub fn read_file(filepath: &str) -> Result<(), Box<dyn std::error::Error>> {
     const BUFFER_LEN: usize = 512;
@@ -14,4 +14,12 @@ pub fn read_file(filepath: &str) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     Ok(())
+}
+
+pub fn extract_fname(path: &str) -> String {
+    return Path::new(&path)
+        .file_name()
+        .unwrap()
+        .to_string_lossy()
+        .to_string();
 }

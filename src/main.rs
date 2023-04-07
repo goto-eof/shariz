@@ -19,7 +19,7 @@ async fn main() {
 
     let stdout_rw_lock: Arc<RwLock<Stdout>> = Arc::new(RwLock::new(stdout()));
 
-    print_header(stdout_rw_lock.clone(), &config).await;
+    //print_header(stdout_rw_lock.clone(), &config).await;
 
     let server = run_server(&config, stdout_rw_lock.clone());
     let client = run_client(&config, stdout_rw_lock.clone());
