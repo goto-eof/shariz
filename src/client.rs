@@ -15,7 +15,8 @@ use tokio::task::JoinHandle;
 
 pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) -> JoinHandle<()> {
     let address = format!("{}:{}", config.target_ip, config.target_port);
-    let shared_directory = format!("{}/client", config.shared_directory);
+    // let shared_directory = format!("{}/client", config.shared_directory);
+    let shared_directory = config.shared_directory.clone();
     tokio::spawn(async move {
         let connection = TcpStream::connect(address);
 
