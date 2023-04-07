@@ -15,7 +15,7 @@ use tokio::task::JoinHandle;
 
 pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) -> JoinHandle<()> {
     let address = format!("{}:{}", config.target_ip, config.target_port);
-    let shared_directory = config.shared_directory.clone();
+    let shared_directory = format!("{}/client", config.shared_directory);
     tokio::spawn(async move {
         let connection = TcpStream::connect(address);
 
@@ -46,29 +46,36 @@ pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) ->
                     ///////////////////////////////
                     /// read bytes length
                     ///////////////////////////////
-                    let mut buffer = [0; 10];
-                    let chars = stream.read(&mut buffer);
-                    let result = String::from_utf8_lossy(&buffer[0..chars.unwrap()]);
-                    println!("parsed size: [{}]", result.to_string().trim());
-                    let result: u64 = result.trim().parse().unwrap();
-                    // let mut reader = BufReader::new(&stream);
-                    // let mut buffer = String::new();
-                    // reader.read_line(&mut buffer);
-                    // println!("clinet size file: {}", buffer);
-                    // let result: u64 = buffer.trim().parse().unwrap();
-                    // println!("received size: {:?}", buffer);
-                    stream.write("OK\r\n".as_bytes());
+                    // let mut buffer = [0; 10];
+                    // let chars = stream.read(&mut buffer);
+                    // let result = String::from_utf8_lossy(&buffer[0..chars.unwrap()]);
+                    // println!("parsed size: [{}]", result.to_string().trim());
+                    // let result: u64 = result.trim().parse().unwrap();
+                    let mut reader = BufReader::new(&stream);
+                    let mut buffer = String::new();
+                    reader.read_line(&mut buffer);
+                    println!("clinet size file: {}", buffer);
+                    let mut buffer: Vec<&str> = buffer.split(";").collect();
+                    println!("yabadabaduuuu {:?}", buffer);
+                    let file_size: u64 = buffer.get(0).unwrap().trim().parse().unwrap();
+                    println!("received size: {:?}", buffer);
+                    let file_hash = buffer.get(1).unwrap().trim();
 
+                    stream.write("OK\r\n".as_bytes());
+                    println!(
+                        "========>file_size: {}, file_hash: {}",
+                        file_size, file_hash
+                    );
                     let fname = Path::new(&file).file_name().unwrap().to_string_lossy();
                     let file_to_save = format!("{}/{}", shared_directory, fname);
 
-                    let x = fs::metadata(&file_to_save).unwrap().len();
-
-                    // if !Path::new(&file_to_save).exists() || result != x
-                    //   || calculate_file_hash(&file_to_save) != file_hash
+                    if !Path::new(&file_to_save).exists()
+                        || Path::new(&file_to_save).exists()
+                            && file_size != fs::metadata(&file_to_save).unwrap().len()
+                        || calculate_file_hash(&file_to_save) != file_hash
                     {
                         println!("client: wating for server file stream....");
-                        let mut buffer: Vec<u8> = vec![0; result.try_into().unwrap()];
+                        let mut buffer: Vec<u8> = vec![0; file_size.try_into().unwrap()];
                         stream.read_exact(&mut buffer);
                         println!(
                             "buffer: {:?}, capacity: {}",

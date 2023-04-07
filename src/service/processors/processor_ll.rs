@@ -18,7 +18,7 @@ impl CommandProcessor for LLProcessor {
         let mut lenght = 0;
         for file in fs::read_dir(&self.search_directory).unwrap() {
             let file = file.unwrap();
-            if !file.path().ends_with(".DS_Store") {
+            if !file.path().ends_with(".DS_Store") && !file.path().is_dir() {
                 files = format!(
                     "{}{},",
                     files,
