@@ -61,7 +61,6 @@ pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) ->
                     println!("received size: {:?}", buffer);
                     let file_hash = buffer.get(1).unwrap().trim();
 
-                    stream.write("OK\r\n".as_bytes());
                     println!(
                         "========>file_size: {}, file_hash: {}",
                         file_size, file_hash
@@ -74,6 +73,7 @@ pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) ->
                             && file_size != fs::metadata(&file_to_save).unwrap().len()
                         || calculate_file_hash(&file_to_save) != file_hash
                     {
+                        stream.write("OK\r\n".as_bytes());
                         println!("client: wating for server file stream....");
                         let mut buffer: Vec<u8> = vec![0; file_size.try_into().unwrap()];
                         stream.read_exact(&mut buffer);
@@ -85,19 +85,8 @@ pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) ->
                         println!("client red strem file from server");
 
                         let now = Utc::now();
-                        let mut file = File::create(format!(
-                            "{}/{}-{}-{}_{}-{}-{}_{}-{}",
-                            shared_directory,
-                            now.year(),
-                            now.month(),
-                            now.day(),
-                            now.hour(),
-                            now.minute(),
-                            now.second(),
-                            now.nanosecond(),
-                            fname
-                        ))
-                        .unwrap();
+                        let mut file =
+                            File::create(format!("{}/{}", shared_directory, fname)).unwrap();
                         println!("writing on file...");
                         file.write_all(&buffer).unwrap();
                         println!("writed on file");
