@@ -31,6 +31,7 @@ pub fn extract_fname(path: &str) -> String {
 }
 
 pub fn calculate_file_hash(path_and_fname: &str) -> String {
+    println!("paaaath: {}", path_and_fname);
     let mut file = fs::File::open(&path_and_fname).unwrap();
     let mut hasher = Sha256::new();
     io::copy(&mut file, &mut hasher).unwrap();

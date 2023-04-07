@@ -1,6 +1,6 @@
 use crate::service::file_service::calculate_file_hash;
 use crate::structures::config::Config;
-use chrono::{Datelike, Timelike, Utc};
+use chrono::Utc;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{Shutdown, TcpStream};
@@ -81,6 +81,8 @@ pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) ->
                         file.write_all(&buffer).unwrap();
                         println!("writed on file");
                         let ten_millis = time::Duration::from_millis(1000);
+                    } else {
+                        stream.write("KO\r\n".as_bytes());
                     }
                 }
             }
