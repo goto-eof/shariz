@@ -1,6 +1,5 @@
 use crate::service::file_service::calculate_file_hash;
 use crate::structures::config::Config;
-use chrono::Utc;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{Shutdown, TcpStream};
