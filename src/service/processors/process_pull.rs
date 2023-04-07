@@ -19,7 +19,7 @@ impl CommandProcessor for PullProcessor {
         let fname = full_command.split(" ").nth(1).unwrap().trim();
         println!("server yahooo: {}", &fname);
         let full_path = format!("{}/{}", self.search_directory, &fname);
-        println!("full_path: {}", full_path);
+        println!("server full_path: {}", full_path);
         // let mut file = File::open(full_path).unwrap();
         // let mut reader = BufReader::new(file.try_clone().unwrap());
         let mut data = fs::read(full_path).unwrap();

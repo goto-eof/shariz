@@ -3,6 +3,8 @@ use crate::server::run_server;
 use crate::util::home_util::print_header;
 use crate::{service::console_service::print_message, structures::config::Config};
 use config_file::FromConfigFile;
+use std::thread;
+use std::time::Duration;
 use std::{
     io::{stdout, Stdout},
     sync::{Arc, RwLock},
@@ -22,10 +24,12 @@ async fn main() {
     //print_header(stdout_rw_lock.clone(), &config).await;
 
     let server = run_server(&config, stdout_rw_lock.clone());
-    let client = run_client(&config, stdout_rw_lock.clone());
 
     server.await;
-    client.await;
-
-    loop {}
+    println!("yabado");
+    loop {
+        let client = run_client(&config, stdout_rw_lock.clone());
+        client.await;
+        thread::sleep(Duration::from_millis(5000));
+    }
 }

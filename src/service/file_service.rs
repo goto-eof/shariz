@@ -1,4 +1,10 @@
-use std::{fs::File, io::Read, path::Path};
+use std::{
+    fs::{self, File},
+    io::{self, Read},
+    path::Path,
+};
+
+use sha2::{Digest, Sha256};
 
 pub fn read_file(filepath: &str) -> Result<(), Box<dyn std::error::Error>> {
     const BUFFER_LEN: usize = 512;
@@ -22,4 +28,13 @@ pub fn extract_fname(path: &str) -> String {
         .unwrap()
         .to_string_lossy()
         .to_string();
+}
+
+pub fn calculate_file_hash(path_and_fname: &str) -> String {
+    let mut file = fs::File::open(&path_and_fname).unwrap();
+    let mut hasher = Sha256::new();
+    io::copy(&mut file, &mut hasher).unwrap();
+    let hash = hasher.finalize();
+    let result = hex::encode(hash);
+    return result;
 }
