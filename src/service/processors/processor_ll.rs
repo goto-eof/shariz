@@ -10,10 +10,11 @@ pub struct LLProcessor {
 
 impl CommandProcessor for LLProcessor {
     fn accept(&self, root_command: &str) -> bool {
-        return root_command.starts_with("ll ");
+        return root_command.starts_with("ll");
     }
 
     fn process(&self, full_command: &str, stream: &mut TcpStream) -> bool {
+        println!("processing command: {}", full_command);
         let mut files_string = "".to_owned();
         let mut lenght = 0;
 
