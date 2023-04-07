@@ -28,8 +28,7 @@ async fn main() {
     server.await;
     println!("yabado");
     loop {
-        let client = run_client(&config, stdout_rw_lock.clone());
-        client.await;
+        let client = run_client(&config, stdout_rw_lock.clone()).await;
         thread::sleep(Duration::from_millis(5000));
     }
 }

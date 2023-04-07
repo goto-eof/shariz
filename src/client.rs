@@ -20,10 +20,10 @@ pub async fn run_client(config: &Config, stdout_rw_lock: Arc<RwLock<Stdout>>) ->
         let connection = TcpStream::connect(address);
 
         if connection.is_ok() {
-            let mut stream = connection.unwrap();
+            let stream = connection.unwrap();
             let mut cloned_stream = stream.try_clone().unwrap();
 
-            request_for_file_list(&mut stream);
+            request_for_file_list(&mut cloned_stream);
 
             let file_list = read_file_list(&stream);
 
