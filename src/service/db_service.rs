@@ -26,7 +26,7 @@ pub fn initialize_db() -> Option<Connection> {
     return Some(conn);
 }
 
-pub fn list_all_files(connection: Connection) -> Option<Vec<DbFile>> {
+pub fn list_all_files(connection: &Connection) -> Option<Vec<DbFile>> {
     let mut statement_result = connection.prepare("SELECT f.id, f.name, f.status from files f");
     if statement_result.is_err() {
         println!("unable to extract filenames from db");
@@ -45,7 +45,7 @@ pub fn list_all_files(connection: Connection) -> Option<Vec<DbFile>> {
     return Some(files);
 }
 
-pub fn update_file_status(connection: Connection, file_id: i32, status: i32) -> bool {
+pub fn update_file_status(connection: &Connection, file_id: i32, status: i32) -> bool {
     let statement_result = connection.execute(
         "UPDATE files SET status=?1 WHERE id= ?2",
         &[&file_id, &status],
@@ -57,14 +57,20 @@ pub fn update_file_status(connection: Connection, file_id: i32, status: i32) -> 
     return statement_result.unwrap() == 1;
 }
 
-pub fn insert_file(connection: Connection, fname: &str, status: i32) -> bool {
-    // TODO
+pub fn insert_file(connection: &Connection, fname: &str, status: i32) -> bool {
+    let result = connection.execute(
+        "INSERT INTO files (name, status) values (?1, ?2)",
+        &[&fname.to_string(), &status.to_string()],
+    );
+    if result.is_err() {
+        println!("error inserting filename");
+        return false;
+    }
     return true;
 }
 
 pub fn check_if_exists(connection: Connection, fname: &str) -> bool {
-    // TODO
-    let mut stmt = connection.prepare("SELECT EXISTS(SELECT 1 FROM files WHERE name=?1)");
+    let stmt = connection.prepare("SELECT EXISTS(SELECT 1 FROM files WHERE name=?1)");
     if stmt.is_err() {
         println!("error while checking if reord exists");
         return false;
@@ -75,6 +81,11 @@ pub fn check_if_exists(connection: Connection, fname: &str) -> bool {
         println!("unable to check existence of record");
         return false;
     }
-
-    return true;
+    let mut query = query.unwrap();
+    return query
+        .next()
+        .unwrap()
+        .unwrap()
+        .get::<usize, bool>(0)
+        .unwrap();
 }
