@@ -17,3 +17,7 @@ At startup Shariz loads the target server ip and port from the configuration fil
 
 # Screenshot
 ![shariz flow](screenshot.png)
+
+# For developers
+
+sudo apt-get install libsqlite3-dev
