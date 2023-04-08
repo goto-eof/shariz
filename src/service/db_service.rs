@@ -1,5 +1,7 @@
 use rusqlite::Connection;
 
+use crate::structures::file::DbFile;
+
 pub fn initialize_db() -> Option<Connection> {
     let conn = Connection::open("shariz.db");
     if conn.is_err() {
@@ -24,7 +26,7 @@ pub fn initialize_db() -> Option<Connection> {
     return Some(conn);
 }
 
-pub fn list_all_files(connection: Connection) -> Option<Vec<(i32, String, i32)>> {
+pub fn list_all_files(connection: Connection) -> Option<Vec<DbFile>> {
     let mut statement_result = connection.prepare("SELECT f.id, f.name, f.status from files f");
     if statement_result.is_err() {
         println!("unable to extract filenames from db");
@@ -32,13 +34,47 @@ pub fn list_all_files(connection: Connection) -> Option<Vec<(i32, String, i32)>>
     }
     let mut statement = statement_result.unwrap();
     let files = statement.query_map([], |row| {
-        Ok((
-            row.get::<usize, i32>(0).unwrap(),
-            row.get::<usize, String>(1).unwrap(),
-            row.get::<usize, i32>(2).unwrap(),
-        ))
+        Ok(DbFile {
+            id: row.get::<usize, i32>(0).unwrap(),
+            name: row.get::<usize, String>(1).unwrap(),
+            status: row.get::<usize, i32>(2).unwrap(),
+        })
     });
     let files = files.unwrap();
-    let files: Vec<(i32, String, i32)> = files.map(|item| item.unwrap()).collect();
+    let files: Vec<DbFile> = files.map(|item| item.unwrap()).collect();
     return Some(files);
+}
+
+pub fn update_file_status(connection: Connection, file_id: i32, status: i32) -> bool {
+    let statement_result = connection.execute(
+        "UPDATE files SET status=?1 WHERE id= ?2",
+        &[&file_id, &status],
+    );
+    if statement_result.is_err() {
+        println!("unable to udpate file status");
+        return false;
+    }
+    return statement_result.unwrap() == 1;
+}
+
+pub fn insert_file(connection: Connection, fname: &str, status: i32) -> bool {
+    // TODO
+    return true;
+}
+
+pub fn check_if_exists(connection: Connection, fname: &str) -> bool {
+    // TODO
+    let mut stmt = connection.prepare("SELECT EXISTS(SELECT 1 FROM files WHERE name=?1)");
+    if stmt.is_err() {
+        println!("error while checking if reord exists");
+        return false;
+    }
+    let mut stmt = stmt.unwrap();
+    let query = stmt.query(rusqlite::params![fname]);
+    if query.is_err() {
+        println!("unable to check existence of record");
+        return false;
+    }
+
+    return true;
 }
