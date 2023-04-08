@@ -17,7 +17,7 @@ pub async fn run_client(
     let address = format!("{}:{}", config.target_ip, config.target_port);
     let shared_directory = config.shared_directory.clone();
     // TODO delete the row bellow: this is for testing purposes
-    let shared_directory = format!("{}/{}", shared_directory, "tmp");
+    //let shared_directory = format!("{}/{}", shared_directory, "tmp");
     let rd_timeout = config.client_rd_timeout;
     let wr_timeout = config.client_wr_timeout;
     tokio::spawn(async move {
