@@ -45,13 +45,23 @@ pub fn list_all_files(connection: &Connection) -> Option<Vec<DbFile>> {
     return Some(files);
 }
 
-pub fn update_file_status(connection: &Connection, file_id: i32, status: i32) -> bool {
-    let statement_result = connection.execute(
-        "UPDATE files SET status=?1 WHERE id= ?2",
-        &[&file_id, &status],
-    );
+pub fn retrieve_deleted_files(connection: &Connection) -> Option<Vec<String>> {
+    let mut statement_result = connection.prepare("SELECT f.name from files f");
     if statement_result.is_err() {
-        println!("unable to udpate file status");
+        println!("unable to extract filenames from db");
+        return None;
+    }
+    let mut statement = statement_result.unwrap();
+    let files = statement.query_map([], |row| Ok(row.get::<usize, String>(1).unwrap()));
+    let files = files.unwrap();
+    let files: Vec<String> = files.map(|item| item.unwrap()).collect();
+    return Some(files);
+}
+
+pub fn update_file_delete_status(connection: &Connection, name: String, status: i32) -> bool {
+    let statement_result = connection.execute("UPDATE files SET status=1 WHERE name=?1", [name]);
+    if statement_result.is_err() {
+        println!("unable to udpate file status: {:?}", statement_result.err());
         return false;
     }
     return statement_result.unwrap() == 1;
@@ -69,7 +79,7 @@ pub fn insert_file(connection: &Connection, fname: &str, status: i32) -> bool {
     return true;
 }
 
-pub fn check_if_exists(connection: Connection, fname: &str) -> bool {
+pub fn check_if_exists(connection: &Connection, fname: &str) -> bool {
     let stmt = connection.prepare("SELECT EXISTS(SELECT 1 FROM files WHERE name=?1)");
     if stmt.is_err() {
         println!("error while checking if reord exists");

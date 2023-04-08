@@ -19,7 +19,7 @@ mod util;
 async fn main() {
     let config = Config::from_config_file("configuration/configuration.json").unwrap();
 
-    print_header(&mut stdout(), &config).await;
+    //print_header(&mut stdout(), &config).await;
 
     let db_connection = initialize_db();
     if db_connection.is_none() {

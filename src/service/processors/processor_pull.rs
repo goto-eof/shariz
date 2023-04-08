@@ -40,7 +40,7 @@ impl CommandProcessor for PullProcessor {
         let data = fs::read(full_path).unwrap();
 
         stream
-            .write_all(format!("{};{}\r\n", data.len(), sha2).as_bytes())
+            .write_all(format!("{};{}\r\n", data.len(), sha2.unwrap()).as_bytes())
             .unwrap();
         let mut buffer = [0; 100];
         let read_result = stream.read(&mut buffer);
@@ -52,7 +52,10 @@ impl CommandProcessor for PullProcessor {
 
         let from_utf8_result = str::from_utf8(&buffer);
         if from_utf8_result.is_err() {
-            println!("error: client did not send OK (2)");
+            println!(
+                "error: client did not send OK (2): {:?}",
+                from_utf8_result.err()
+            );
             return false;
         }
         let client_response = from_utf8_result.unwrap();

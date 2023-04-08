@@ -16,6 +16,8 @@ pub async fn run_client(
 ) -> JoinHandle<()> {
     let address = format!("{}:{}", config.target_ip, config.target_port);
     let shared_directory = config.shared_directory.clone();
+    // TODO delete the row bellow: this is for testing purposes
+    let shared_directory = format!("{}/{}", shared_directory, "tmp");
     let rd_timeout = config.client_rd_timeout;
     let wr_timeout = config.client_wr_timeout;
     tokio::spawn(async move {
@@ -44,27 +46,39 @@ pub async fn run_client(
             let file_list = read_file_list(&stream);
 
             for file in file_list {
-                if file.trim().len() > 0 {
-                    make_pull_request(file.as_str(), &mut cloned_stream);
-
-                    let opt_file_size_hash = size_sha2_request(&stream);
-                    if opt_file_size_hash.is_none() {
-                        send_ko(&mut cloned_stream);
-                    }
-                    let (file_size, file_hash) = opt_file_size_hash.unwrap();
-                    let (fname, file_to_save) =
-                        calculate_file_to_save(file.as_str(), &shared_directory);
-
-                    if !Path::new(&file_to_save).exists()
-                        || Path::new(&file_to_save).exists()
-                            && file_size != fs::metadata(&file_to_save).unwrap().len()
-                        || calculate_file_hash(&file_to_save) != file_hash
-                    {
-                        send_data_request(&mut cloned_stream);
-                        let buffer = extract_file_from_stream(file_size, &mut cloned_stream);
-                        override_file(buffer, &shared_directory, fname);
+                if file.0.trim().len() > 0 {
+                    if file.1 == 1 {
+                        println!("file deleted");
+                        let file_path = format!("{}/{}", &shared_directory, file.0.trim());
+                        if Path::new(&file_path).exists() {
+                            fs::remove_file(file_path).unwrap();
+                        }
                     } else {
-                        send_ko(&mut cloned_stream);
+                        make_pull_request(file.0.as_str(), &mut cloned_stream);
+
+                        let opt_file_size_hash = size_sha2_request(&stream);
+                        if opt_file_size_hash.is_none() {
+                            println!("sending ko (1)");
+                            send_ko(&mut cloned_stream);
+                        }
+                        let (file_size, file_hash) = opt_file_size_hash.unwrap();
+                        let (fname, file_to_save) =
+                            calculate_file_to_save(file.0.as_str(), &shared_directory);
+
+                        if !Path::new(&file_to_save).exists()
+                            || Path::new(&file_to_save).exists()
+                                && file_size != fs::metadata(&file_to_save).unwrap().len()
+                            || calculate_file_hash(&file_to_save).unwrap() != file_hash
+                        {
+                            println!("sending data request....");
+                            send_data_request(&mut cloned_stream);
+                            println!("extracting file from strea....");
+                            let buffer = extract_file_from_stream(file_size, &mut cloned_stream);
+                            println!("writing stream on file");
+                            override_file(buffer, &shared_directory, fname);
+                        } else {
+                            send_ko(&mut cloned_stream);
+                        }
                     }
                 }
             }
@@ -87,19 +101,28 @@ fn send_ko(cloned_stream: &mut TcpStream) {
     }
 }
 
-fn read_file_list(stream: &TcpStream) -> Vec<String> {
+fn read_file_list(stream: &TcpStream) -> Vec<(String, i32)> {
     let mut response = String::new();
     let mut conn = BufReader::new(stream);
     let read_result = conn.read_line(&mut response);
     if read_result.is_ok() {
         let result = response;
         let file_list = result.split(",");
-        let count = file_list.clone().count();
-        println!("received vector: {:?} - count: {}", file_list, count);
-        return file_list
-            .collect::<Vec<&str>>()
+        println!("file_list: {:?}", result);
+        let file_list_vec = file_list.collect::<Vec<&str>>();
+        if file_list_vec.len() == 1 && !file_list_vec.get(0).unwrap().contains(";") {
+            return Vec::new();
+        }
+        return file_list_vec
             .into_iter()
-            .map(|item| item.to_string())
+            .filter(|item| item.contains(";"))
+            .map(|item| {
+                let vector = item.split(";").collect::<Vec<&str>>();
+                return (
+                    vector.get(0).unwrap().to_string(),
+                    vector.get(1).unwrap().parse::<i32>().unwrap(),
+                );
+            })
             .collect();
     }
     return Vec::new();

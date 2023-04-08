@@ -10,12 +10,15 @@ pub fn extract_fname(path: &str) -> String {
         .to_string();
 }
 
-pub fn calculate_file_hash(path_and_fname: &str) -> String {
+pub fn calculate_file_hash(path_and_fname: &str) -> Option<String> {
+    if Path::new(path_and_fname).is_dir() {
+        return None;
+    }
     println!("paaaath: {}", path_and_fname);
     let mut file = fs::File::open(&path_and_fname).unwrap();
     let mut hasher = Sha256::new();
     io::copy(&mut file, &mut hasher).unwrap();
     let hash = hasher.finalize();
     let result = hex::encode(hash);
-    return result;
+    return Some(result);
 }
