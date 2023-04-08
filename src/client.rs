@@ -4,11 +4,16 @@ use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{Shutdown, TcpStream};
 use std::path::Path;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use rusqlite::Connection;
 use tokio::task::JoinHandle;
 
-pub async fn run_client(config: &Config) -> JoinHandle<()> {
+pub async fn run_client(
+    config: &Config,
+    db_connection_mutex: Arc<Mutex<Connection>>,
+) -> JoinHandle<()> {
     let address = format!("{}:{}", config.target_ip, config.target_port);
     let shared_directory = config.shared_directory.clone();
     let rd_timeout = config.client_rd_timeout;

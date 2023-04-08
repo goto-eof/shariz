@@ -1,8 +1,16 @@
+use rusqlite::Connection;
+
 use crate::structures::command_processor::CommandProcessor;
-use std::{fs, io::Write, net::TcpStream};
+use std::{
+    fs,
+    io::Write,
+    net::TcpStream,
+    sync::{Arc, Mutex},
+};
 
 pub struct DelProcessor {
     pub search_directory: String,
+    pub db_connection_mutex: Arc<Mutex<Connection>>,
 }
 
 impl CommandProcessor for DelProcessor {
@@ -39,9 +47,10 @@ impl CommandProcessor for DelProcessor {
 }
 
 impl DelProcessor {
-    pub fn new(directory: &str) -> Self {
+    pub fn new(directory: &str, db_connection_mutex: Arc<Mutex<Connection>>) -> Self {
         DelProcessor {
             search_directory: directory.to_owned(),
+            db_connection_mutex,
         }
     }
 }

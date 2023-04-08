@@ -1,7 +1,10 @@
+use rusqlite::Connection;
+
 use crate::{
     service::file_service::calculate_file_hash, structures::command_processor::CommandProcessor,
 };
 use std::str;
+use std::sync::{Arc, Mutex};
 use std::{
     fs::{self},
     io::{Read, Write},
@@ -10,6 +13,7 @@ use std::{
 
 pub struct PullProcessor {
     pub search_directory: String,
+    pub db_connection_mutex: Arc<Mutex<Connection>>,
 }
 
 impl CommandProcessor for PullProcessor {
@@ -68,9 +72,10 @@ impl CommandProcessor for PullProcessor {
 }
 
 impl PullProcessor {
-    pub fn new(directory: &str) -> Self {
+    pub fn new(directory: &str, db_connection_mutex: Arc<Mutex<Connection>>) -> Self {
         PullProcessor {
             search_directory: directory.to_owned(),
+            db_connection_mutex,
         }
     }
 }

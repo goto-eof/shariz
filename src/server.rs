@@ -1,6 +1,9 @@
+use rusqlite::Connection;
+
 use crate::{
     service::processors::{
-        process_pull::PullProcessor, processor_del::DelProcessor, processor_ll::LLProcessor,
+        processor_del::DelProcessor, processor_ll::LLProcessor,
+        processor_local_update::LocalUpdateProcessor, processor_pull::PullProcessor,
     },
     structures::{command_processor::CommandProcessorType, config::Config},
 };
@@ -10,10 +13,11 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-pub async fn run_server(config: &Config) {
+pub async fn run_server(config: &Config, db_connection_mutex: Arc<Mutex<Connection>>) {
     let port = config.self_port;
-    let processors: Arc<Mutex<Vec<CommandProcessorType>>> =
-        Arc::new(Mutex::new(prepare_command_processors(config)));
+    let processors: Arc<Mutex<Vec<CommandProcessorType>>> = Arc::new(Mutex::new(
+        prepare_command_processors(config, db_connection_mutex),
+    ));
     tokio::spawn(async move {
         let address = format!("{}:{}", "0.0.0.0", port);
         let listener = TcpListener::bind(address).unwrap();
@@ -59,8 +63,8 @@ pub async fn receive_data(
                         let operation_result = processor.process(&line, &mut stream_clone);
                         if !operation_result {
                             println!("failed to execute the `{}` operation", &line);
+                            break;
                         }
-                        break;
                     }
                 }
             }
@@ -68,11 +72,27 @@ pub async fn receive_data(
     }
 }
 
-pub fn prepare_command_processors(config: &Config) -> Vec<CommandProcessorType> {
+pub fn prepare_command_processors(
+    config: &Config,
+    db_connection_mutex: Arc<Mutex<Connection>>,
+) -> Vec<CommandProcessorType> {
     let mut processors: Vec<CommandProcessorType> = Vec::new();
     let shared_directory = config.shared_directory.as_str();
-    processors.push(Box::new(LLProcessor::new(shared_directory)));
-    processors.push(Box::new(PullProcessor::new(shared_directory)));
-    processors.push(Box::new(DelProcessor::new(shared_directory)));
+    processors.push(Box::new(LocalUpdateProcessor::new(
+        shared_directory,
+        db_connection_mutex.clone(),
+    )));
+    processors.push(Box::new(LLProcessor::new(
+        shared_directory,
+        db_connection_mutex.clone(),
+    )));
+    processors.push(Box::new(PullProcessor::new(
+        shared_directory,
+        db_connection_mutex.clone(),
+    )));
+    processors.push(Box::new(DelProcessor::new(
+        shared_directory,
+        db_connection_mutex.clone(),
+    )));
     return processors;
 }
