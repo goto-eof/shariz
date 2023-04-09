@@ -1,3 +1,4 @@
+use crate::service::db_service::list_all_files;
 use crate::service::file_service::calculate_file_hash;
 use crate::structures::config::Config;
 use std::fs::{self, File};
@@ -7,6 +8,7 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use chrono::{DateTime, FixedOffset};
 use rusqlite::Connection;
 use tokio::task::JoinHandle;
 
@@ -44,14 +46,23 @@ pub async fn run_client(
             request_for_file_list(&mut cloned_stream);
 
             let file_list = read_file_list(&stream);
-
+            let all_db_files = list_all_files(&db_connection_mutex.lock().unwrap()).unwrap();
             for file in file_list {
                 if file.0.trim().len() > 0 {
-                    if file.1 == 1 {
-                        println!("file deleted");
-                        let file_path = format!("{}/{}", &shared_directory, file.0.trim());
-                        if Path::new(&file_path).exists() {
-                            fs::remove_file(file_path).unwrap();
+                    let file_on_db = all_db_files.iter().find(|file_db| file_db.name.eq(&file.0));
+                    let file_path = format!("{}/{}", &shared_directory, file.0.trim());
+                    // if file.1 == 1 && file_on_db.is_none() {
+                    //     println!("file deleted");
+                    //     if Path::new(&file_path).exists() {
+                    //         fs::remove_file(file_path).unwrap();
+                    //     }
+                    // } else
+                    if file.1 == 1 && file_on_db.is_some() {
+                        let file_on_db = file_on_db.unwrap();
+                        if file_on_db.status == 0 && file_on_db.last_update.le(&file.2) {
+                            if Path::new(&file_path).exists() {
+                                fs::remove_file(file_path).unwrap();
+                            }
                         }
                     } else {
                         make_pull_request(file.0.as_str(), &mut cloned_stream);
@@ -101,7 +112,7 @@ fn send_ko(cloned_stream: &mut TcpStream) {
     }
 }
 
-fn read_file_list(stream: &TcpStream) -> Vec<(String, i32)> {
+fn read_file_list(stream: &TcpStream) -> Vec<(String, i32, DateTime<FixedOffset>)> {
     let mut response = String::new();
     let mut conn = BufReader::new(stream);
     let read_result = conn.read_line(&mut response);
@@ -121,6 +132,7 @@ fn read_file_list(stream: &TcpStream) -> Vec<(String, i32)> {
                 return (
                     vector.get(0).unwrap().to_string(),
                     vector.get(1).unwrap().parse::<i32>().unwrap(),
+                    DateTime::parse_from_rfc3339(vector.get(2).unwrap()).unwrap(),
                 );
             })
             .collect();

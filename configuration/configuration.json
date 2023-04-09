@@ -1,5 +1,5 @@
 {
-  "target_ip": "192.168.1.107",
+  "target_ip": "192.168.1.113",
   "target_port": 9001,
   "self_port": 9001,
   "shared_directory": "/Users/andrei/Desktop/shariz",

@@ -35,7 +35,13 @@ impl CommandProcessor for LLProcessor {
         let all_db_files = list_all_files(&self.db_connection_mutex.lock().unwrap()).unwrap();
 
         all_db_files.iter().for_each(|file| {
-            files_string = format!("{}{};{},", files_string, file.name, file.status);
+            files_string = format!(
+                "{}{};{};{},",
+                files_string,
+                file.name,
+                file.status,
+                file.last_update.to_rfc3339()
+            );
         });
         // for file_result in files {
         //     if file_result.is_err() {_
