@@ -70,7 +70,7 @@ pub async fn run_client(
                         // }
                     } else if file.1 == 0 && file_on_db.is_some() {
                         let file_on_db = file_on_db.unwrap();
-                        if file_on_db.last_update.gt(&file.2) {
+                        if file_on_db.status == 1 && file_on_db.last_update.gt(&file.2) {
                             if Path::new(&file_path).exists() {
                                 println!("=====> case 2 - dbfile: {:?} - {:?}", &file_on_db, file);
                                 fs::remove_file(file_path).unwrap();
