@@ -47,50 +47,67 @@ pub async fn run_client(
 
             let file_list = read_file_list(&stream);
             let all_db_files = list_all_files(&db_connection_mutex.lock().unwrap()).unwrap();
-            for file in file_list {
-                if file.0.trim().len() > 0 {
-                    let file_on_db = all_db_files.iter().find(|file_db| file_db.name.eq(&file.0));
-                    let file_path = format!("{}/{}", &shared_directory, file.0.trim());
-                    if file.1 == 1 && file_on_db.is_some() {
+            for file_on_server in file_list {
+                if file_on_server.0.trim().len() > 0 {
+                    let file_on_db = all_db_files
+                        .iter()
+                        .find(|file_db| file_db.name.eq(&file_on_server.0));
+                    let file_path = format!("{}/{}", &shared_directory, file_on_server.0.trim());
+
+                    if file_on_server.1 == 1 && file_on_db.is_some() {
                         println!("#######> case 0001");
                         let file_on_db = file_on_db.unwrap();
-                        if file_on_db.status == 0 && file_on_db.last_update.le(&file.2) {
+                        if file_on_db.status == 0 && file_on_db.last_update.le(&file_on_server.2) {
                             if Path::new(&file_path).exists() {
-                                println!("=====> case 1 - dbfile: {:?} - {:?}", &file_on_db, file);
+                                println!(
+                                    "=====> case 1 - dbfile: {:?} - {:?}",
+                                    &file_on_db, file_on_server
+                                );
 
                                 fs::remove_file(file_path).unwrap();
                                 update_file_delete_status(
                                     &db_connection_mutex.lock().unwrap(),
-                                    file.0.trim().to_owned(),
+                                    file_on_server.0.trim().to_owned(),
                                     1,
                                 );
                             }
                         }
-                    } else if file.1 == 0 && file_on_db.is_some() {
-                        println!("#######> case 0001");
+                    } else if file_on_server.1 == 0 && file_on_db.is_some() {
+                        println!("#######> case 0002");
 
                         let file_on_db = file_on_db.unwrap();
-                        if file_on_db.status == 1 && file_on_db.last_update.gt(&file.2) {
+                        if file_on_db.status == 1 && file_on_db.last_update.gt(&file_on_server.2) {
                             if Path::new(&file_path).exists() {
                                 println!(
                                     "=====> case 2 - dbfile: {:?}{:?} - {:?}",
                                     &file_on_db.status,
                                     &file_on_db.last_update.to_rfc3339(),
-                                    file
+                                    file_on_server
                                 );
                                 fs::remove_file(file_path).unwrap();
                                 update_file_delete_status(
                                     &db_connection_mutex.lock().unwrap(),
-                                    file.0.trim().to_owned(),
+                                    file_on_server.0.trim().to_owned(),
                                     1,
                                 );
                             }
-                        } 
-                        else if file.1 == 0 {
-                            process_file(file, &mut cloned_stream, &stream, &shared_directory);
+                        } else if file_on_server.1 == 0 && !Path::new(&file_path).exists() {
+                            println!("file deleted: {:?} - db: {:?}", file_on_server, file_on_db);
+                        } else {
+                            process_file(
+                                file_on_server,
+                                &mut cloned_stream,
+                                &stream,
+                                &shared_directory,
+                            );
                         }
                     } else {
-                        process_file(file, &mut cloned_stream, &stream, &shared_directory);
+                        process_file(
+                            file_on_server,
+                            &mut cloned_stream,
+                            &stream,
+                            &shared_directory,
+                        );
                     }
                 }
             }
