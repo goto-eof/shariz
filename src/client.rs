@@ -149,7 +149,9 @@ fn request_for_file_list(stream: &mut TcpStream) {
 }
 
 fn override_file(buffer: Vec<u8>, shared_directory: &String, fname: String) {
-    let mut file = File::create(format!("{}/{}", shared_directory, fname)).unwrap();
+    let file_path = format!("{}/{}", shared_directory, fname);
+    println!("writing on file: {}", file_path);
+    let mut file = File::create(file_path).unwrap();
     let write_result = file.write_all(&buffer);
     if write_result.is_err() {
         println!("error writing file: {:?}", write_result.err());
