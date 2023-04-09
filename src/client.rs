@@ -65,10 +65,9 @@ pub async fn run_client(
                                     1,
                                 );
                             }
+                        } else {
+                            process_file(file, &mut cloned_stream, &stream, &shared_directory);
                         }
-                        //  else if file.1 == 0 {
-                        //     process_file(file, &mut cloned_stream, &stream, &shared_directory);
-                        // }
                     } else if file.1 == 0 && file_on_db.is_some() {
                         println!("#######> case 0001");
 
