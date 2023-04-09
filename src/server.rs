@@ -49,8 +49,6 @@ pub async fn receive_data(
     let mut lines = reader.lines();
 
     while let Some(line) = lines.next() {
-        println!("{}", format!("server received: {:?}", line));
-
         if line.is_ok() {
             let line = line.unwrap();
             let processors_result = processors.lock();

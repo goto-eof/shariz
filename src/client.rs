@@ -51,20 +51,21 @@ pub async fn run_client(
                 if file.0.trim().len() > 0 {
                     let file_on_db = all_db_files.iter().find(|file_db| file_db.name.eq(&file.0));
                     let file_path = format!("{}/{}", &shared_directory, file.0.trim());
-                    // if file.1 == 1 && file_on_db.is_none() {
-                    //     println!("file deleted");
-                    //     if Path::new(&file_path).exists() {
-                    //         fs::remove_file(file_path).unwrap();
-                    //     }
-                    // } else
-
                     if file.1 == 1 && file_on_db.is_some() {
                         let file_on_db = file_on_db.unwrap();
-                        println!(
-                            "########################\n{}<={}",
-                            file_on_db.last_update, file.2
-                        );
                         if file_on_db.status == 0 && file_on_db.last_update.le(&file.2) {
+                            if Path::new(&file_path).exists() {
+                                fs::remove_file(file_path).unwrap();
+                                update_file_delete_status(
+                                    &db_connection_mutex.lock().unwrap(),
+                                    file.0.trim().to_owned(),
+                                    1,
+                                );
+                            }
+                        }
+                    } else if file.1 == 0 && file_on_db.is_some() {
+                        let file_on_db = file_on_db.unwrap();
+                        if file_on_db.last_update.gt(&file.2) {
                             if Path::new(&file_path).exists() {
                                 fs::remove_file(file_path).unwrap();
                                 update_file_delete_status(
@@ -91,11 +92,8 @@ pub async fn run_client(
                                 && file_size != fs::metadata(&file_to_save).unwrap().len()
                             || calculate_file_hash(&file_to_save).unwrap() != file_hash
                         {
-                            println!("sending data request....");
                             send_data_request(&mut cloned_stream);
-                            println!("extracting file from strea....");
                             let buffer = extract_file_from_stream(file_size, &mut cloned_stream);
-                            println!("writing stream on file");
                             override_file(buffer, &shared_directory, fname);
                         } else {
                             send_ko(&mut cloned_stream);
@@ -129,7 +127,6 @@ fn read_file_list(stream: &TcpStream) -> Vec<(String, i32, DateTime<FixedOffset>
     if read_result.is_ok() {
         let result = response;
         let file_list = result.split(",");
-        println!("file_list: {:?}", result);
         let file_list_vec = file_list.collect::<Vec<&str>>();
         if file_list_vec.len() == 1 && !file_list_vec.get(0).unwrap().contains(";") {
             return Vec::new();

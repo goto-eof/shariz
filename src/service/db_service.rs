@@ -72,6 +72,7 @@ pub fn update_file_delete_status(connection: &Connection, name: String, status: 
     let statement_result = statement_result
         .unwrap()
         .execute(rusqlite::params![status, name]);
+    println!("updated file status: {} - {}", name, status);
     return statement_result.unwrap() == 1;
 }
 
