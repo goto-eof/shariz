@@ -82,23 +82,23 @@ pub fn insert_file(connection: &Connection, fname: &str, status: i32) -> bool {
     return true;
 }
 
-pub fn check_if_exists(connection: &Connection, fname: &str) -> bool {
-    let stmt = connection.prepare("SELECT EXISTS(SELECT 1 FROM files WHERE name=?1)");
-    if stmt.is_err() {
-        println!("error while checking if reord exists");
-        return false;
-    }
-    let mut stmt = stmt.unwrap();
-    let query = stmt.query(rusqlite::params![fname]);
-    if query.is_err() {
-        println!("unable to check existence of record");
-        return false;
-    }
-    let mut query = query.unwrap();
-    return query
-        .next()
-        .unwrap()
-        .unwrap()
-        .get::<usize, bool>(0)
-        .unwrap();
-}
+// pub fn check_if_exists(connection: &Connection, fname: &str) -> bool {
+//     let stmt = connection.prepare("SELECT EXISTS(SELECT 1 FROM files WHERE name=?1)");
+//     if stmt.is_err() {
+//         println!("error while checking if reord exists");
+//         return false;
+//     }
+//     let mut stmt = stmt.unwrap();
+//     let query = stmt.query(rusqlite::params![fname]);
+//     if query.is_err() {
+//         println!("unable to check existence of record");
+//         return false;
+//     }
+//     let mut query = query.unwrap();
+//     return query
+//         .next()
+//         .unwrap()
+//         .unwrap()
+//         .get::<usize, bool>(0)
+//         .unwrap();
+// }
