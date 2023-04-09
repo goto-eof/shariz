@@ -105,12 +105,17 @@ pub async fn run_client(
                                     1,
                                 );
                             } else {
-                                process_file(
-                                    file_on_server,
-                                    &mut cloned_stream,
-                                    &stream,
-                                    &shared_directory,
-                                );
+                                println!("processing file: {:?}", file_on_server);
+
+                                if file_on_db.status == 1 {
+                                } else {
+                                    process_file(
+                                        file_on_server,
+                                        &mut cloned_stream,
+                                        &stream,
+                                        &shared_directory,
+                                    );
+                                }
                             }
                         } else if file_on_server.1 == 0 && !Path::new(&file_path).exists() {
                             println!(
