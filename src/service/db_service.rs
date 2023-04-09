@@ -29,7 +29,7 @@ pub fn initialize_db() -> Option<Connection> {
 }
 
 pub fn list_all_files(connection: &Connection) -> Option<Vec<DbFile>> {
-    let mut statement_result =
+    let statement_result =
         connection.prepare("SELECT f.id, f.name, f.status, f.last_update from files f");
     if statement_result.is_err() {
         println!("unable to extract filenames from db");
@@ -49,18 +49,18 @@ pub fn list_all_files(connection: &Connection) -> Option<Vec<DbFile>> {
     return Some(files);
 }
 
-pub fn retrieve_deleted_files(connection: &Connection) -> Option<Vec<String>> {
-    let mut statement_result = connection.prepare("SELECT f.name from files f");
-    if statement_result.is_err() {
-        println!("unable to extract filenames from db");
-        return None;
-    }
-    let mut statement = statement_result.unwrap();
-    let files = statement.query_map([], |row| Ok(row.get::<usize, String>(1).unwrap()));
-    let files = files.unwrap();
-    let files: Vec<String> = files.map(|item| item.unwrap()).collect();
-    return Some(files);
-}
+// pub fn retrieve_deleted_files(connection: &Connection) -> Option<Vec<String>> {
+//     let mut statement_result = connection.prepare("SELECT f.name from files f");
+//     if statement_result.is_err() {
+//         println!("unable to extract filenames from db");
+//         return None;
+//     }
+//     let mut statement = statement_result.unwrap();
+//     let files = statement.query_map([], |row| Ok(row.get::<usize, String>(1).unwrap()));
+//     let files = files.unwrap();
+//     let files: Vec<String> = files.map(|item| item.unwrap()).collect();
+//     return Some(files);
+// }
 
 pub fn update_file_delete_status(connection: &Connection, name: String, status: i32) -> bool {
     let statement_result = connection

@@ -56,8 +56,7 @@ pub async fn run_client(
                 files_on_disk.push(file_name);
             }
             let file_list = read_file_list(&stream);
-            let (all_db_files) =
-                retrieve_all_db_files(&stream, &db_connection_mutex, files_on_disk);
+            let all_db_files = retrieve_all_db_files(&db_connection_mutex, files_on_disk);
 
             for file_on_server in file_list {
                 if file_on_server.0.trim().len() > 0 {
@@ -136,7 +135,6 @@ fn file_delete_and_update_status(
 }
 
 fn retrieve_all_db_files(
-    stream: &TcpStream,
     db_connection_mutex: &Arc<Mutex<Connection>>,
     files_on_disk: Vec<String>,
 ) -> Vec<crate::structures::file::DbFile> {

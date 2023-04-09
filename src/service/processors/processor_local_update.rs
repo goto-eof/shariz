@@ -20,11 +20,11 @@ pub struct LocalUpdateProcessor {
 
 impl CommandProcessor for LocalUpdateProcessor {
     fn accept(&self, root_command: &str) -> bool {
-        println!("automatic command execution");
+        println!("automatic command execution: {:?}", root_command);
         return true;
     }
 
-    fn process(&self, full_command: &str, stream: &mut TcpStream) -> bool {
+    fn process(&self, _full_command: &str, _stream: &mut TcpStream) -> bool {
         println!("processing command: SYNCHRONIZE");
         let files_result = fs::read_dir(&self.search_directory);
         if files_result.is_err() {

@@ -1,5 +1,4 @@
 use std::{
-    fs,
     io::Write,
     net::TcpStream,
     sync::{Arc, Mutex},
@@ -7,10 +6,7 @@ use std::{
 
 use rusqlite::Connection;
 
-use crate::{
-    service::{db_service::list_all_files, file_service::extract_fname},
-    structures::{command_processor::CommandProcessor, file::DbFile},
-};
+use crate::{service::db_service::list_all_files, structures::command_processor::CommandProcessor};
 
 pub struct LLProcessor {
     pub search_directory: String,
