@@ -23,7 +23,7 @@ On the first PC replace the target ip with the others PC connected on the same n
 ![shariz flow](screenshot.png)
 
 # How is the final project?
-If I'll have time, in the final project every client should first try to connect to a known server and should retrieve a list of IPs of other Shariz servers. Then for every client will requests files for every server of the downloaded list. 
+If I'll have time, in the final project every client should first try to connect to a known server and should retrieve a list of IPs of other Shariz servers. Then the client will request files for every server of the downloaded list. 
 
 # For developers
 ```
