@@ -64,6 +64,8 @@ pub async fn run_client(
                                     1,
                                 );
                             }
+                        } else {
+                            process_file(file, &mut cloned_stream, &stream, &shared_directory);
                         }
                     } else if file.1 == 0 && file_on_db.is_some() {
                         let file_on_db = file_on_db.unwrap();
@@ -77,30 +79,11 @@ pub async fn run_client(
                                     1,
                                 );
                             }
+                        } else {
+                            process_file(file, &mut cloned_stream, &stream, &shared_directory);
                         }
                     } else {
-                        make_pull_request(file.0.as_str(), &mut cloned_stream);
-
-                        let opt_file_size_hash = size_sha2_request(&stream);
-                        if opt_file_size_hash.is_none() {
-                            println!("sending ko (1)");
-                            send_ko(&mut cloned_stream);
-                        }
-                        let (file_size, file_hash) = opt_file_size_hash.unwrap();
-                        let (fname, file_to_save) =
-                            calculate_file_to_save(file.0.as_str(), &shared_directory);
-
-                        if !Path::new(&file_to_save).exists()
-                            || Path::new(&file_to_save).exists()
-                                && file_size != fs::metadata(&file_to_save).unwrap().len()
-                            || calculate_file_hash(&file_to_save).unwrap() != file_hash
-                        {
-                            send_data_request(&mut cloned_stream);
-                            let buffer = extract_file_from_stream(file_size, &mut cloned_stream);
-                            override_file(buffer, &shared_directory, fname);
-                        } else {
-                            send_ko(&mut cloned_stream);
-                        }
+                        process_file(file, &mut cloned_stream, &stream, &shared_directory);
                     }
                 }
             }
@@ -114,6 +97,35 @@ pub async fn run_client(
             return ();
         }
     })
+}
+
+fn process_file(
+    file: (String, i32, DateTime<FixedOffset>),
+    cloned_stream: &mut TcpStream,
+    stream: &TcpStream,
+    shared_directory: &String,
+) {
+    make_pull_request(file.0.as_str(), cloned_stream);
+
+    let opt_file_size_hash = size_sha2_request(stream);
+    if opt_file_size_hash.is_none() {
+        println!("sending ko (1)");
+        send_ko(cloned_stream);
+    }
+    let (file_size, file_hash) = opt_file_size_hash.unwrap();
+    let (fname, file_to_save) = calculate_file_to_save(file.0.as_str(), shared_directory);
+
+    if !Path::new(&file_to_save).exists()
+        || Path::new(&file_to_save).exists()
+            && file_size != fs::metadata(&file_to_save).unwrap().len()
+        || calculate_file_hash(&file_to_save).unwrap() != file_hash
+    {
+        send_data_request(cloned_stream);
+        let buffer = extract_file_from_stream(file_size, cloned_stream);
+        override_file(buffer, shared_directory, fname);
+    } else {
+        send_ko(cloned_stream);
+    }
 }
 
 fn send_ko(cloned_stream: &mut TcpStream) {
