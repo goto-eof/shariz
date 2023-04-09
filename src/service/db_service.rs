@@ -12,7 +12,7 @@ pub fn initialize_db() -> Option<Connection> {
     let create_table_statement_result = conn.execute(
         "create table if not exists files (
              id integer primary key,
-             name text not null,
+             name text not null unique,
              status integer not null
          )",
         [],
@@ -59,11 +59,14 @@ pub fn retrieve_deleted_files(connection: &Connection) -> Option<Vec<String>> {
 }
 
 pub fn update_file_delete_status(connection: &Connection, name: String, status: i32) -> bool {
-    let statement_result = connection.execute("UPDATE files SET status=1 WHERE name=?1", [name]);
+    let statement_result = connection.prepare_cached("UPDATE files SET status=?1 WHERE name=?2");
     if statement_result.is_err() {
         println!("unable to udpate file status: {:?}", statement_result.err());
         return false;
     }
+    let statement_result = statement_result
+        .unwrap()
+        .execute(rusqlite::params![status, name]);
     return statement_result.unwrap() == 1;
 }
 

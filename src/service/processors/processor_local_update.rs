@@ -61,6 +61,8 @@ impl CommandProcessor for LocalUpdateProcessor {
         files_name_on_db.iter().for_each(|file_name_on_db| {
             if !files_on_disk.contains(file_name_on_db) {
                 update_file_delete_status(&connection, (file_name_on_db).to_string(), 1);
+            } else {
+                update_file_delete_status(&connection, (file_name_on_db).to_string(), 0);
             }
         });
 
