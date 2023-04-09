@@ -52,6 +52,7 @@ pub async fn run_client(
                     let file_on_db = all_db_files.iter().find(|file_db| file_db.name.eq(&file.0));
                     let file_path = format!("{}/{}", &shared_directory, file.0.trim());
                     if file.1 == 1 && file_on_db.is_some() {
+                        println!("#######> case 0001");
                         let file_on_db = file_on_db.unwrap();
                         if file_on_db.status == 0 && file_on_db.last_update.le(&file.2) {
                             if Path::new(&file_path).exists() {
@@ -69,6 +70,8 @@ pub async fn run_client(
                         //     process_file(file, &mut cloned_stream, &stream, &shared_directory);
                         // }
                     } else if file.1 == 0 && file_on_db.is_some() {
+                        println!("#######> case 0001");
+
                         let file_on_db = file_on_db.unwrap();
                         if file_on_db.status == 1 && file_on_db.last_update.gt(&file.2) {
                             if Path::new(&file_path).exists() {
