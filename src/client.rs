@@ -65,72 +65,26 @@ pub async fn run_client(
                         .iter()
                         .find(|file_db| file_db.name.eq(&file_on_server.0));
                     let file_path = format!("{}/{}", &shared_directory, file_on_server.0.trim());
-                    // file deleted on server and not already deleted on client
-                    if file_on_server.1 == 1 && file_on_db.is_some() {
-                        println!("#######> case 0001");
+
+                    if file_on_db.is_some() {
                         let file_on_db = file_on_db.unwrap();
-                        if file_on_db.status == 0 && file_on_db.last_update.le(&file_on_server.2) {
-                            if Path::new(&file_path).exists() {
-                                println!(
-                                    "=====> case 1 - dbfile: {:?} - {:?}",
-                                    &file_on_db, file_on_server
-                                );
 
-                                fs::remove_file(file_path).unwrap();
-                                update_file_delete_status(
-                                    &db_connection_mutex.lock().unwrap(),
-                                    file_on_server.0.trim().to_owned(),
-                                    1,
-                                );
-                            }
-                        }
-                    } else
-                    // file not deleted on server but not deleted on client
-                    if file_on_server.1 == 0 && file_on_db.is_some() {
-                        println!("#######> case 0002");
-
-                        let file_on_db = file_on_db.unwrap();
-                        if file_on_db.status == 1 && file_on_db.last_update.gt(&file_on_server.2) {
-                            if Path::new(&file_path).exists() {
-                                println!(
-                                    "=====> case 2 - dbfile: {:?}{:?} - {:?}",
-                                    &file_on_db.status,
-                                    &file_on_db.last_update.to_rfc3339(),
-                                    file_on_server
-                                );
-                                fs::remove_file(file_path).unwrap();
-                                update_file_delete_status(
-                                    &db_connection_mutex.lock().unwrap(),
-                                    file_on_server.0.trim().to_owned(),
-                                    1,
-                                );
-                            } else {
-                                println!("processing file: {:?}", file_on_server);
-
-                                if file_on_db.status == 1 {
-                                } else {
-                                    process_file(
-                                        file_on_server,
-                                        &mut cloned_stream,
-                                        &stream,
-                                        &shared_directory,
-                                    );
-                                }
-                            }
-                        } else if file_on_server.1 == 0 && !Path::new(&file_path).exists() {
-                            println!(
-                                "=====> case 3 - dbfile: {:?}{:?} - {:?}",
-                                &file_on_db.status,
-                                &file_on_db.last_update.to_rfc3339(),
-                                file_on_server
+                        if file_on_server.1 == 1
+                            && file_on_db.status == 0
+                            && file_on_db.last_update.le(&file_on_server.2)
+                        {
+                            println!("case: deleted on server, not deleted on client");
+                            file_delete_and_update_status(
+                                &file_path,
+                                file_on_db,
+                                &file_on_server,
+                                &db_connection_mutex,
                             );
-                            process_file(
-                                file_on_server,
-                                &mut cloned_stream,
-                                &stream,
-                                &shared_directory,
-                            );
-                        } else {
+                        } else if file_on_server.1 == 0
+                            && file_on_db.status == 1
+                            && file_on_server.2.gt(&file_on_db.last_update)
+                        {
+                            println!("case: not deleted on server, deleted on client");
                             process_file(
                                 file_on_server,
                                 &mut cloned_stream,
@@ -158,6 +112,27 @@ pub async fn run_client(
             return ();
         }
     })
+}
+
+fn file_delete_and_update_status(
+    file_path: &String,
+    file_on_db: &crate::structures::file::DbFile,
+    file_on_server: &(String, i32, DateTime<FixedOffset>),
+    db_connection_mutex: &Arc<Mutex<Connection>>,
+) {
+    if Path::new(file_path).exists() {
+        println!(
+            "=====> case 1 - dbfile: {:?} - {:?}",
+            &file_on_db, file_on_server
+        );
+
+        fs::remove_file(file_path).unwrap();
+        update_file_delete_status(
+            &db_connection_mutex.lock().unwrap(),
+            file_on_server.0.trim().to_owned(),
+            1,
+        );
+    }
 }
 
 fn retrieve_all_db_files(
