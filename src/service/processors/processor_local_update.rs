@@ -1,18 +1,16 @@
-use std::{
-    fs,
-    net::TcpStream,
-    path::Path,
-    sync::{Arc, Mutex},
-};
-
-use rusqlite::Connection;
-
 use crate::{
     service::{
         db_service::{insert_file, list_all_files, update_file_delete_status},
         file_service::extract_fname,
     },
     structures::command_processor::CommandProcessor,
+};
+use rusqlite::Connection;
+use std::{
+    fs,
+    net::TcpStream,
+    path::Path,
+    sync::{Arc, Mutex},
 };
 
 pub struct LocalUpdateProcessor {
@@ -54,11 +52,17 @@ impl CommandProcessor for LocalUpdateProcessor {
             files_on_db.iter().map(|file| file.name.clone()).collect();
 
         /* Update deleted files */
-        files_name_on_db.iter().for_each(|file_name_on_db| {
-            if !files_on_disk.contains(file_name_on_db) {
-                update_file_delete_status(&connection, (file_name_on_db).to_string(), 1);
+        files_on_db.iter().for_each(|file_on_db| {
+            if !files_on_disk.contains(&file_on_db.name) {
+                if file_on_db.status != 1 {
+                    println!("----> delete {}", &file_on_db.name);
+                    update_file_delete_status(&connection, (&file_on_db.name).to_string(), 1);
+                }
             } else {
-                update_file_delete_status(&connection, (file_name_on_db).to_string(), 0);
+                if file_on_db.status != 0 {
+                    println!("----> undelete {}", &file_on_db.name);
+                    update_file_delete_status(&connection, (&file_on_db.name).to_string(), 0);
+                }
             }
         });
 

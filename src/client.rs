@@ -55,6 +55,8 @@ pub async fn run_client(
                         let file_on_db = file_on_db.unwrap();
                         if file_on_db.status == 0 && file_on_db.last_update.le(&file.2) {
                             if Path::new(&file_path).exists() {
+                                println!("=====> case 1 - dbfile: {:?} - {:?}", &file_on_db, file);
+
                                 fs::remove_file(file_path).unwrap();
                                 update_file_delete_status(
                                     &db_connection_mutex.lock().unwrap(),
@@ -67,6 +69,7 @@ pub async fn run_client(
                         let file_on_db = file_on_db.unwrap();
                         if file_on_db.last_update.gt(&file.2) {
                             if Path::new(&file_path).exists() {
+                                println!("=====> case 2");
                                 fs::remove_file(file_path).unwrap();
                                 update_file_delete_status(
                                     &db_connection_mutex.lock().unwrap(),
