@@ -1,14 +1,16 @@
 use crate::service::db_service::{list_all_files, update_file_delete_status};
 use crate::service::file_service::{calculate_file_hash, extract_fname};
 use crate::structures::config::Config;
+use std::fmt::Error;
 use std::fs::{self, File};
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::{BufRead, BufReader, ErrorKind, Read, Write};
 use std::net::{Shutdown, TcpStream};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use chrono::{DateTime, FixedOffset};
+use local_ip_address::local_ip;
 use rusqlite::Connection;
 use tokio::task::JoinHandle;
 
@@ -16,15 +18,16 @@ pub async fn run_client(
     config: &Config,
     db_connection_mutex: Arc<Mutex<Connection>>,
 ) -> JoinHandle<()> {
-    let address = format!("{}:{}", config.target_ip, config.target_port);
+    // let address = format!("{}:{}", config.target_ip, config.target_port);
     let shared_directory = config.shared_directory.clone();
+    let target_ip = config.target_ip.clone();
     // TODO delete the row bellow: this is for testing purposes
     // let shared_directory = format!("{}/{}", shared_directory, "tmp");
     let rd_timeout = config.client_rd_timeout;
     let wr_timeout = config.client_wr_timeout;
+    let port = config.target_port;
     tokio::spawn(async move {
-        let connection = TcpStream::connect(address);
-
+        let connection = discover_service(target_ip, port);
         if connection.is_ok() {
             let stream = connection.unwrap();
             let result_rt = stream.set_read_timeout(Some(Duration::from_millis(rd_timeout)));
@@ -107,10 +110,42 @@ pub async fn run_client(
             }
             return ();
         } else {
-            println!("connection error");
+            println!("connection error: {:?}", connection.err());
             return ();
         }
     })
+}
+
+fn discover_service(address: String, port: u16) -> Result<TcpStream, std::io::Error> {
+    TcpStream::connect(format!("{}:{}", address, port))
+    // let mut i = 0;
+    // let mut address = make_address(i, port);
+    // let mut connection = async_std::net::TcpStream::connect(&address).await;
+    // let mut connection = Err(std::io::Error::new(ErrorKind::Other, "oh no!"));
+    // let my_local_ip = local_ip().unwrap().to_string();
+    // while connection.is_err() {
+    //     if format!("192.168.1.{}", i).eq(&my_local_ip) {
+    //         i = i + 1;
+    //         address = make_address(i, port);
+    //     }
+    //     println!("conn: {:?}", connection);
+    //     i = i + 1;
+    //     println!("yabado");
+    //     address = make_address(i, port);
+    //     if i > 255 {
+    //         i = 0;
+    //     }
+    //     println!("searching for server: {}", &address);
+    //     connection = TcpStream::connect(address.clone());
+    // }
+    // println!("connected to: {} - localip: {}", &address, my_local_ip);
+    // Ok(TcpStream::connect(address).unwrap())
+}
+
+fn make_address(i: i32, port: u16) -> String {
+    let mut address = format!("192.168.1.{}:{}", i, port);
+    // let mut address = format!("192.168.1.{}", i);
+    address
 }
 
 fn file_delete_and_update_status(

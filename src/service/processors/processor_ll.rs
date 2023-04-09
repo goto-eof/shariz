@@ -34,7 +34,7 @@ impl CommandProcessor for LLProcessor {
             );
         });
 
-        println!("{}", files_string);
+        // println!("{}", files_string);
         let files = format!("{}\r\n", files_string);
         let write_result = stream.write_all(files.as_bytes());
         if write_result.is_err() {
