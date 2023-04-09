@@ -17,7 +17,7 @@ mod util;
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() {
-    let config = Config::from_config_file("configuration/configuration.json").unwrap();
+    let config = Config::from_config_file("configurations/configuration.json").unwrap();
 
     print_header(&mut stdout(), &config).await;
 

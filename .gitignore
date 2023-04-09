@@ -1,5 +1,6 @@
 /target
-/configuration
+/configurations
+configuration.json
 .vscode
 .DS_Store
 shariz.db

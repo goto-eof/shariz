@@ -1,8 +1,0 @@
-{
-  "target_ip": "192.168.1.113",
-  "target_port": 9001,
-  "self_port": 9001,
-  "shared_directory": "/Users/andrei/Desktop/shariz",
-  "client_rd_timeout": 10000,
-  "client_wr_timeout": 10000
-}
