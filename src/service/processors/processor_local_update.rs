@@ -70,6 +70,7 @@ impl CommandProcessor for LocalUpdateProcessor {
         for file_on_disk in files_on_disk {
             if !files_name_on_db.contains(&file_on_disk)
                 && !Path::new(&format!("{}/{}", self.search_directory, file_on_disk)).is_dir()
+                && !file_on_disk.eq(".DS_Store")
             {
                 insert_file(&connection, &file_on_disk, 0);
             }
