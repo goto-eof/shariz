@@ -1,5 +1,5 @@
 use crate::service::db_service::{list_all_files, update_file_delete_status};
-use crate::service::file_service::calculate_file_hash;
+use crate::service::file_service::{calculate_file_hash, extract_fname};
 use crate::structures::config::Config;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Read, Write};
@@ -19,7 +19,7 @@ pub async fn run_client(
     let address = format!("{}:{}", config.target_ip, config.target_port);
     let shared_directory = config.shared_directory.clone();
     // TODO delete the row bellow: this is for testing purposes
-    //let shared_directory = format!("{}/{}", shared_directory, "tmp");
+    // let shared_directory = format!("{}/{}", shared_directory, "tmp");
     let rd_timeout = config.client_rd_timeout;
     let wr_timeout = config.client_wr_timeout;
     tokio::spawn(async move {
@@ -45,15 +45,27 @@ pub async fn run_client(
 
             request_for_file_list(&mut cloned_stream);
 
+            let files_result = fs::read_dir(&shared_directory).unwrap();
+            let mut files_on_disk: Vec<String> = vec![];
+            for file_result in files_result {
+                if file_result.is_err() {
+                    println!("unable to list file");
+                }
+                let file = file_result.unwrap();
+                let file_name = extract_fname(&file.path().to_string_lossy().to_string());
+                files_on_disk.push(file_name);
+            }
             let file_list = read_file_list(&stream);
-            let all_db_files = list_all_files(&db_connection_mutex.lock().unwrap()).unwrap();
+            let (all_db_files) =
+                retrieve_all_db_files(&stream, &db_connection_mutex, files_on_disk);
+
             for file_on_server in file_list {
                 if file_on_server.0.trim().len() > 0 {
                     let file_on_db = all_db_files
                         .iter()
                         .find(|file_db| file_db.name.eq(&file_on_server.0));
                     let file_path = format!("{}/{}", &shared_directory, file_on_server.0.trim());
-
+                    // file deleted on server and not already deleted on client
                     if file_on_server.1 == 1 && file_on_db.is_some() {
                         println!("#######> case 0001");
                         let file_on_db = file_on_db.unwrap();
@@ -72,7 +84,9 @@ pub async fn run_client(
                                 );
                             }
                         }
-                    } else if file_on_server.1 == 0 && file_on_db.is_some() {
+                    } else
+                    // file not deleted on server but not deleted on client
+                    if file_on_server.1 == 0 && file_on_db.is_some() {
                         println!("#######> case 0002");
 
                         let file_on_db = file_on_db.unwrap();
@@ -90,9 +104,27 @@ pub async fn run_client(
                                     file_on_server.0.trim().to_owned(),
                                     1,
                                 );
+                            } else {
+                                process_file(
+                                    file_on_server,
+                                    &mut cloned_stream,
+                                    &stream,
+                                    &shared_directory,
+                                );
                             }
                         } else if file_on_server.1 == 0 && !Path::new(&file_path).exists() {
-                            println!("file deleted: {:?} - db: {:?}", file_on_server, file_on_db);
+                            println!(
+                                "=====> case 3 - dbfile: {:?}{:?} - {:?}",
+                                &file_on_db.status,
+                                &file_on_db.last_update.to_rfc3339(),
+                                file_on_server
+                            );
+                            process_file(
+                                file_on_server,
+                                &mut cloned_stream,
+                                &stream,
+                                &shared_directory,
+                            );
                         } else {
                             process_file(
                                 file_on_server,
@@ -121,6 +153,37 @@ pub async fn run_client(
             return ();
         }
     })
+}
+
+fn retrieve_all_db_files(
+    stream: &TcpStream,
+    db_connection_mutex: &Arc<Mutex<Connection>>,
+    files_on_disk: Vec<String>,
+) -> Vec<crate::structures::file::DbFile> {
+    let all_db_files = list_all_files(&db_connection_mutex.lock().unwrap()).unwrap();
+    all_db_files.iter().for_each(|file_on_db| {
+        if !files_on_disk.contains(&file_on_db.name) {
+            if file_on_db.status != 1 {
+                println!("----> delete {}", &file_on_db.name);
+                update_file_delete_status(
+                    &db_connection_mutex.lock().unwrap(),
+                    (&file_on_db.name).to_string(),
+                    1,
+                );
+            }
+        } else {
+            if file_on_db.status != 0 {
+                println!("----> undelete {}", &file_on_db.name);
+                update_file_delete_status(
+                    &db_connection_mutex.lock().unwrap(),
+                    (&file_on_db.name).to_string(),
+                    0,
+                );
+            }
+        }
+    });
+    let all_db_files = list_all_files(&db_connection_mutex.lock().unwrap()).unwrap();
+    all_db_files
 }
 
 fn process_file(
