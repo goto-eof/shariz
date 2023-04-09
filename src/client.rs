@@ -1,4 +1,4 @@
-use crate::service::db_service::list_all_files;
+use crate::service::db_service::{list_all_files, update_file_delete_status};
 use crate::service::file_service::calculate_file_hash;
 use crate::structures::config::Config;
 use std::fs::{self, File};
@@ -57,11 +57,21 @@ pub async fn run_client(
                     //         fs::remove_file(file_path).unwrap();
                     //     }
                     // } else
+
                     if file.1 == 1 && file_on_db.is_some() {
                         let file_on_db = file_on_db.unwrap();
+                        println!(
+                            "########################\n{}<={}",
+                            file_on_db.last_update, file.2
+                        );
                         if file_on_db.status == 0 && file_on_db.last_update.le(&file.2) {
                             if Path::new(&file_path).exists() {
                                 fs::remove_file(file_path).unwrap();
+                                update_file_delete_status(
+                                    &db_connection_mutex.lock().unwrap(),
+                                    file.0.trim().to_owned(),
+                                    1,
+                                );
                             }
                         }
                     } else {

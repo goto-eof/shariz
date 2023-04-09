@@ -66,7 +66,10 @@ impl CommandProcessor for LocalUpdateProcessor {
                 println!("update file delete status {}", file_name_on_db);
                 update_file_delete_status(&connection, (file_name_on_db).to_string(), 1);
             } else {
-                println!("update file undelete status {}", file_name_on_db);
+                println!(
+                    "\n\n\n*********************\nupdate file undelete status {}",
+                    file_name_on_db
+                );
                 update_file_delete_status(&connection, (file_name_on_db).to_string(), 0);
             }
         });
