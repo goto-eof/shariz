@@ -7,7 +7,7 @@ use crate::{
 };
 use rusqlite::Connection;
 use std::{
-    fs,
+    clone, fs,
     net::TcpStream,
     path::Path,
     sync::{Arc, Mutex},
@@ -51,6 +51,16 @@ impl CommandProcessor for LocalUpdateProcessor {
         let files_name_on_db: Vec<String> =
             files_on_db.iter().map(|file| file.name.clone()).collect();
 
+        /* add new files */
+        for file_on_disk in files_on_disk.clone() {
+            if !files_name_on_db.contains(&file_on_disk)
+                && !Path::new(&format!("{}/{}", self.search_directory, file_on_disk)).is_dir()
+                && !file_on_disk.eq(".DS_Store")
+            {
+                insert_file(&connection, &file_on_disk, 0);
+            }
+        }
+
         /* Update deleted files */
         files_on_db.iter().for_each(|file_on_db| {
             if !files_on_disk.contains(&file_on_db.name) {
@@ -65,16 +75,6 @@ impl CommandProcessor for LocalUpdateProcessor {
                 }
             }
         });
-
-        /* add new files */
-        for file_on_disk in files_on_disk {
-            if !files_name_on_db.contains(&file_on_disk)
-                && !Path::new(&format!("{}/{}", self.search_directory, file_on_disk)).is_dir()
-                && !file_on_disk.eq(".DS_Store")
-            {
-                insert_file(&connection, &file_on_disk, 0);
-            }
-        }
 
         return true;
     }
