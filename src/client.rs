@@ -1,16 +1,14 @@
 use crate::service::db_service::{list_all_files, update_file_delete_status};
 use crate::service::file_service::{calculate_file_hash, extract_fname};
 use crate::structures::config::Config;
-use std::fmt::Error;
 use std::fs::{self, File};
-use std::io::{BufRead, BufReader, ErrorKind, Read, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{Shutdown, TcpStream};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use chrono::{DateTime, FixedOffset};
-use local_ip_address::local_ip;
 use rusqlite::Connection;
 use tokio::task::JoinHandle;
 
@@ -59,7 +57,8 @@ pub async fn run_client(
                 files_on_disk.push(file_name);
             }
             let file_list = read_file_list(&stream);
-            let all_db_files = retrieve_all_db_files(&db_connection_mutex, files_on_disk);
+            let all_db_files =
+                refresh_and_retrieve_all_db_files(&db_connection_mutex, files_on_disk);
 
             for file_on_server in file_list {
                 if file_on_server.0.trim().len() > 0 {
@@ -169,7 +168,7 @@ fn file_delete_and_update_status(
     }
 }
 
-fn retrieve_all_db_files(
+fn refresh_and_retrieve_all_db_files(
     db_connection_mutex: &Arc<Mutex<Connection>>,
     files_on_disk: Vec<String>,
 ) -> Vec<crate::structures::file::DbFile> {
