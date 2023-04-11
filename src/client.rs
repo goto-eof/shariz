@@ -94,12 +94,14 @@ pub async fn run_client(
                             );
                         }
                     } else {
-                        process_file(
-                            file_on_server,
-                            &mut cloned_stream,
-                            &stream,
-                            &shared_directory,
-                        );
+                        if file_on_server.1 == 0 {
+                            process_file(
+                                file_on_server,
+                                &mut cloned_stream,
+                                &stream,
+                                &shared_directory,
+                            );
+                        }
                     }
                 }
             }
