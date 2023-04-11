@@ -6,6 +6,4 @@ pub struct Config {
     pub target_port: u16,
     pub self_port: u16,
     pub shared_directory: String,
-    pub client_rd_timeout: u64,
-    pub client_wr_timeout: u64,
 }

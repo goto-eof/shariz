@@ -1,7 +1,9 @@
+use crate::structures::file::DbFile;
 use chrono::{DateTime, Utc};
 use rusqlite::Connection;
 
-use crate::structures::file::DbFile;
+pub const DELETED: i32 = 1;
+pub const CREATED: i32 = 0;
 
 pub fn initialize_db() -> Option<Connection> {
     let conn = Connection::open("shariz.db");

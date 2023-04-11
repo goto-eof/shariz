@@ -1,12 +1,15 @@
-use crate::service::db_service::{list_all_files_on_db, update_file_delete_status};
-use crate::service::file_service::{calculate_file_hash, extract_fname};
+use crate::service::db_service::{
+    list_all_files_on_db, update_file_delete_status, CREATED, DELETED,
+};
+use crate::service::file_service::calculate_file_hash;
+use crate::service::processors::processor_local_update::LocalUpdateProcessor;
 use crate::structures::config::Config;
+use core::panic;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{Shutdown, TcpStream};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 
 use chrono::{DateTime, FixedOffset};
 use rusqlite::Connection;
@@ -16,51 +19,26 @@ pub async fn run_client(
     config: &Config,
     db_connection_mutex: Arc<Mutex<Connection>>,
 ) -> JoinHandle<()> {
-    // let address = format!("{}:{}", config.target_ip, config.target_port);
     let shared_directory = config.shared_directory.clone();
     let target_ip = config.target_ip.clone();
-    // TODO delete the row bellow: this is for testing purposes
-    // let shared_directory = format!("{}/{}", shared_directory, "tmp");
-    let rd_timeout = config.client_rd_timeout;
-    let wr_timeout = config.client_wr_timeout;
     let port = config.target_port;
     tokio::spawn(async move {
-        let connection = discover_service(target_ip, port);
+        let connection = enstablish_connection(target_ip, port);
         if connection.is_ok() {
             let stream = connection.unwrap();
-            let result_rt = stream.set_read_timeout(Some(Duration::from_millis(rd_timeout)));
-            if result_rt.is_err() {
-                let result_shutdown = stream.shutdown(Shutdown::Both);
-                if result_shutdown.is_err() {
-                    println!("shutdown error");
-                }
+
+            let cloned_stream = stream.try_clone();
+            if cloned_stream.is_err() {
+                panic!("failed to clone stream");
             }
-            let result_wt = stream.set_write_timeout(Some(Duration::from_millis(wr_timeout)));
-            if result_wt.is_err() {
-                let result_shutdown = stream.shutdown(Shutdown::Both);
-                if result_shutdown.is_err() {
-                    println!("shutdown error");
-                }
-            }
-            let mut cloned_stream = stream.try_clone().unwrap();
+            let mut cloned_stream = cloned_stream.unwrap();
 
             request_for_file_list(&mut cloned_stream);
-
-            let files_result = fs::read_dir(&shared_directory).unwrap();
-            let mut files_on_disk: Vec<String> = vec![];
-            for file_result in files_result {
-                if file_result.is_err() {
-                    println!("unable to list file");
-                }
-                let file = file_result.unwrap();
-                let file_name = extract_fname(&file.path().to_string_lossy().to_string());
-                files_on_disk.push(file_name);
-            }
-            let file_list = read_file_list(&stream);
+            let server_file_list = extract_server_file_list(&stream);
             let all_db_files =
-                refresh_and_retrieve_all_db_files(&db_connection_mutex, files_on_disk);
+                refresh_and_retrieve_all_db_files(&db_connection_mutex, &shared_directory);
 
-            for file_on_server in file_list {
+            for file_on_server in server_file_list {
                 if file_on_server.0.trim().len() > 0 {
                     let file_on_db = all_db_files
                         .iter()
@@ -92,6 +70,14 @@ pub async fn run_client(
                                 &stream,
                                 &shared_directory,
                             );
+                        } else {
+                            if file_on_db.status != DELETED
+                                && file_on_server.1 != DELETED
+                                && file_on_db.status != CREATED
+                                && file_on_server.1 != CREATED
+                            {
+                                println!("not expected\ndeleted on client: {}\ndeleted on server: {}\nlast update on client: {}\nlast update on server: {}", file_on_db.status, file_on_server.1, file_on_db.last_update, file_on_server.2);
+                            }
                         }
                     } else {
                         if file_on_server.1 == 0 {
@@ -101,6 +87,8 @@ pub async fn run_client(
                                 &stream,
                                 &shared_directory,
                             );
+                        } else {
+                            println!("not expected case");
                         }
                     }
                 }
@@ -117,36 +105,8 @@ pub async fn run_client(
     })
 }
 
-fn discover_service(address: String, port: u16) -> Result<TcpStream, std::io::Error> {
+fn enstablish_connection(address: String, port: u16) -> Result<TcpStream, std::io::Error> {
     TcpStream::connect(format!("{}:{}", address, port))
-    // let mut i = 0;
-    // let mut address = make_address(i, port);
-    // let mut connection = async_std::net::TcpStream::connect(&address).await;
-    // let mut connection = Err(std::io::Error::new(ErrorKind::Other, "oh no!"));
-    // let my_local_ip = local_ip().unwrap().to_string();
-    // while connection.is_err() {
-    //     if format!("192.168.1.{}", i).eq(&my_local_ip) {
-    //         i = i + 1;
-    //         address = make_address(i, port);
-    //     }
-    //     println!("conn: {:?}", connection);
-    //     i = i + 1;
-    //     println!("yabado");
-    //     address = make_address(i, port);
-    //     if i > 255 {
-    //         i = 0;
-    //     }
-    //     println!("searching for server: {}", &address);
-    //     connection = TcpStream::connect(address.clone());
-    // }
-    // println!("connected to: {} - localip: {}", &address, my_local_ip);
-    // Ok(TcpStream::connect(address).unwrap())
-}
-
-fn make_address(i: i32, port: u16) -> String {
-    let mut address = format!("192.168.1.{}:{}", i, port);
-    // let mut address = format!("192.168.1.{}", i);
-    address
 }
 
 fn file_delete_and_update_status(
@@ -172,32 +132,18 @@ fn file_delete_and_update_status(
 
 fn refresh_and_retrieve_all_db_files(
     db_connection_mutex: &Arc<Mutex<Connection>>,
-    files_on_disk: Vec<String>,
+    shared_directory: &str,
 ) -> Vec<crate::structures::file::DbFile> {
-    let all_db_files = list_all_files_on_db(&db_connection_mutex.lock().unwrap()).unwrap();
-    all_db_files.iter().for_each(|file_on_db| {
-        if !files_on_disk.contains(&file_on_db.name) {
-            if file_on_db.status != 1 {
-                println!("----> delete {}", &file_on_db.name);
-                update_file_delete_status(
-                    &db_connection_mutex.lock().unwrap(),
-                    (&file_on_db.name).to_string(),
-                    1,
-                );
-            }
-        } else {
-            if file_on_db.status != 0 {
-                println!("----> undelete {}", &file_on_db.name);
-                update_file_delete_status(
-                    &db_connection_mutex.lock().unwrap(),
-                    (&file_on_db.name).to_string(),
-                    0,
-                );
-            }
-        }
-    });
-    let all_db_files = list_all_files_on_db(&db_connection_mutex.lock().unwrap()).unwrap();
-    all_db_files
+    let connection = db_connection_mutex.lock();
+    if connection.is_err() {
+        panic!("unable to open db connection");
+    }
+    let connection = connection.unwrap();
+    let result = LocalUpdateProcessor::sync_disk_with_db(&connection, shared_directory);
+    if !result {
+        panic!("unable to sync disk with db");
+    }
+    list_all_files_on_db(&connection).unwrap()
 }
 
 fn process_file(
@@ -236,7 +182,7 @@ fn send_ko(cloned_stream: &mut TcpStream) {
     }
 }
 
-fn read_file_list(stream: &TcpStream) -> Vec<(String, i32, DateTime<FixedOffset>)> {
+fn extract_server_file_list(stream: &TcpStream) -> Vec<(String, i32, DateTime<FixedOffset>)> {
     let mut response = String::new();
     let mut buf_reader = BufReader::new(stream);
     let read_result = buf_reader.read_line(&mut response);
