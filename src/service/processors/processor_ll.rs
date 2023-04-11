@@ -6,7 +6,9 @@ use std::{
 
 use rusqlite::Connection;
 
-use crate::{service::db_service::list_all_files, structures::command_processor::CommandProcessor};
+use crate::{
+    service::db_service::list_all_files_on_db, structures::command_processor::CommandProcessor,
+};
 
 pub struct LLProcessor {
     pub search_directory: String,
@@ -22,7 +24,7 @@ impl CommandProcessor for LLProcessor {
         println!("processing command: {}", full_command);
         let mut files_string = "".to_owned();
 
-        let all_db_files = list_all_files(&self.db_connection_mutex.lock().unwrap()).unwrap();
+        let all_db_files = list_all_files_on_db(&self.db_connection_mutex.lock().unwrap()).unwrap();
 
         all_db_files.iter().for_each(|file| {
             files_string = format!(

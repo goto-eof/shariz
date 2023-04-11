@@ -1,6 +1,6 @@
 use crate::{
     service::{
-        db_service::{insert_file, list_all_files, update_file_delete_status},
+        db_service::{insert_file, list_all_files_on_db, update_file_delete_status},
         file_service::{calculate_file_hash, extract_fname},
     },
     structures::command_processor::CommandProcessor,
@@ -47,7 +47,7 @@ impl CommandProcessor for LocalUpdateProcessor {
             let file_name = extract_fname(&file.path().to_string_lossy().to_string());
             files_on_disk.push(file_name);
         }
-        let files_on_db = list_all_files(&connection).unwrap();
+        let files_on_db = list_all_files_on_db(&connection).unwrap();
         let files_name_on_db: Vec<String> =
             files_on_db.iter().map(|file| file.name.clone()).collect();
 

@@ -29,7 +29,7 @@ pub fn initialize_db() -> Option<Connection> {
     return Some(conn);
 }
 
-pub fn list_all_files(connection: &Connection) -> Option<Vec<DbFile>> {
+pub fn list_all_files_on_db(connection: &Connection) -> Option<Vec<DbFile>> {
     let statement_result =
         connection.prepare("SELECT f.id, f.name, f.status, f.last_update, f.sha2 from files f");
     if statement_result.is_err() {

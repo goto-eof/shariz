@@ -1,4 +1,4 @@
-use crate::service::db_service::{list_all_files, update_file_delete_status};
+use crate::service::db_service::{list_all_files_on_db, update_file_delete_status};
 use crate::service::file_service::{calculate_file_hash, extract_fname};
 use crate::structures::config::Config;
 use std::fs::{self, File};
@@ -174,7 +174,7 @@ fn refresh_and_retrieve_all_db_files(
     db_connection_mutex: &Arc<Mutex<Connection>>,
     files_on_disk: Vec<String>,
 ) -> Vec<crate::structures::file::DbFile> {
-    let all_db_files = list_all_files(&db_connection_mutex.lock().unwrap()).unwrap();
+    let all_db_files = list_all_files_on_db(&db_connection_mutex.lock().unwrap()).unwrap();
     all_db_files.iter().for_each(|file_on_db| {
         if !files_on_disk.contains(&file_on_db.name) {
             if file_on_db.status != 1 {
@@ -196,7 +196,7 @@ fn refresh_and_retrieve_all_db_files(
             }
         }
     });
-    let all_db_files = list_all_files(&db_connection_mutex.lock().unwrap()).unwrap();
+    let all_db_files = list_all_files_on_db(&db_connection_mutex.lock().unwrap()).unwrap();
     all_db_files
 }
 
