@@ -238,12 +238,13 @@ fn send_ko(cloned_stream: &mut TcpStream) {
 
 fn read_file_list(stream: &TcpStream) -> Vec<(String, i32, DateTime<FixedOffset>)> {
     let mut response = String::new();
-    let mut conn = BufReader::new(stream);
-    let read_result = conn.read_line(&mut response);
+    let mut buf_reader = BufReader::new(stream);
+    let read_result = buf_reader.read_line(&mut response);
     if read_result.is_ok() {
         let result = response;
         let file_list = result.split(",");
         let file_list_vec = file_list.collect::<Vec<&str>>();
+        println!("result of ll command: {:?}", file_list_vec);
         if file_list_vec.len() == 1 && !file_list_vec.get(0).unwrap().contains(";") {
             return Vec::new();
         }
