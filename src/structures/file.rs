@@ -6,4 +6,5 @@ pub struct DbFile {
     pub name: String,
     pub status: i32,
     pub last_update: DateTime<Utc>,
+    pub sha2: String,
 }

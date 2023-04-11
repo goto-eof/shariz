@@ -15,6 +15,7 @@ pub fn initialize_db() -> Option<Connection> {
              id integer primary key,
              name text not null unique,
              status integer not null,
+             sha2 text not null,
              last_update timestamp
          )",
         [],
@@ -30,7 +31,7 @@ pub fn initialize_db() -> Option<Connection> {
 
 pub fn list_all_files(connection: &Connection) -> Option<Vec<DbFile>> {
     let statement_result =
-        connection.prepare("SELECT f.id, f.name, f.status, f.last_update from files f");
+        connection.prepare("SELECT f.id, f.name, f.status, f.last_update, f.sha2 from files f");
     if statement_result.is_err() {
         println!("unable to extract filenames from db");
         return None;
@@ -42,11 +43,28 @@ pub fn list_all_files(connection: &Connection) -> Option<Vec<DbFile>> {
             name: row.get::<usize, String>(1).unwrap(),
             status: row.get::<usize, i32>(2).unwrap(),
             last_update: row.get::<usize, DateTime<Utc>>(3).unwrap(),
+            sha2: row.get::<usize, String>(4).unwrap(),
         })
     });
     let files = files.unwrap();
     let files: Vec<DbFile> = files.map(|item| item.unwrap()).collect();
     return Some(files);
+}
+
+pub fn retrieve_file_hash_from_db(connection: &Connection, fname: &str) -> Option<String> {
+    let mut stmt = connection.prepare("SELECT sha2 FROM files");
+    if stmt.is_err() {
+        println!("unable to retrieve sha2 (1)");
+        return None;
+    }
+    let mut stmt = stmt.unwrap();
+    let mut rows = stmt.query([]);
+    if rows.is_err() {
+        println!("unable to retrieve sha2 (1)");
+        return None;
+    }
+    let mut rows = rows.unwrap();
+    return Some(rows.next().unwrap().unwrap().get(0).unwrap());
 }
 
 // pub fn retrieve_deleted_files(connection: &Connection) -> Option<Vec<String>> {
@@ -76,10 +94,24 @@ pub fn update_file_delete_status(connection: &Connection, name: String, status: 
     return statement_result.unwrap() == 1;
 }
 
-pub fn insert_file(connection: &Connection, fname: &str, status: i32) -> bool {
+pub fn update_file_sha2(connection: &Connection, name: String, sha2: String) -> bool {
+    let statement_result = connection
+        .prepare_cached("UPDATE files SET sha2=?1, last_update=CURRENT_TIMESTAMP WHERE name=?2");
+    if statement_result.is_err() {
+        println!("unable to udpate file status: {:?}", statement_result.err());
+        return false;
+    }
+    let statement_result = statement_result
+        .unwrap()
+        .execute(rusqlite::params![sha2, name]);
+    println!("updated file sha2: {} - {}", name, sha2);
+    return statement_result.unwrap() == 1;
+}
+
+pub fn insert_file(connection: &Connection, fname: &str, status: i32, sha2: &str) -> bool {
     let result = connection.execute(
-        "INSERT INTO files (name, status, last_update) values (?1, ?2, CURRENT_TIMESTAMP)",
-        &[&fname.to_string(), &status.to_string()],
+        "INSERT INTO files (name, status, last_update, sha2) values (?1, ?2, CURRENT_TIMESTAMP, ?3)",
+        &[&fname.to_string(), &status.to_string(), &sha2.to_string()],
     );
     if result.is_err() {
         println!("error inserting filename");

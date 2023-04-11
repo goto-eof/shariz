@@ -1,7 +1,7 @@
 use crate::{
     service::{
         db_service::{insert_file, list_all_files, update_file_delete_status},
-        file_service::extract_fname,
+        file_service::{calculate_file_hash, extract_fname},
     },
     structures::command_processor::CommandProcessor,
 };
@@ -53,11 +53,17 @@ impl CommandProcessor for LocalUpdateProcessor {
 
         /* add new files */
         for file_on_disk in files_on_disk.clone() {
+            let full_path = format!("{}/{}", self.search_directory, file_on_disk);
             if !files_name_on_db.contains(&file_on_disk)
-                && !Path::new(&format!("{}/{}", self.search_directory, file_on_disk)).is_dir()
+                && !Path::new(&full_path).is_dir()
                 && !file_on_disk.eq(".DS_Store")
             {
-                insert_file(&connection, &file_on_disk, 0);
+                let sha2 = calculate_file_hash(&full_path);
+                if sha2.is_none() {
+                    println!("unable to caluclate sha2 of file: {}", file_on_disk);
+                } else {
+                    insert_file(&connection, &file_on_disk, 0, sha2.unwrap().as_str());
+                }
             }
         }
 

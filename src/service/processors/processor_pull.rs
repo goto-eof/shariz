@@ -1,5 +1,6 @@
 use rusqlite::Connection;
 
+use crate::service::db_service::retrieve_file_hash_from_db;
 use crate::{
     service::file_service::calculate_file_hash, structures::command_processor::CommandProcessor,
 };
@@ -36,7 +37,7 @@ impl CommandProcessor for PullProcessor {
         let fname = fname.get(1).unwrap().trim();
 
         let full_path = format!("{}/{}", self.search_directory, &fname);
-        let sha2 = calculate_file_hash(&full_path);
+        let sha2 = retrieve_file_hash_from_db(&self.db_connection_mutex.lock().unwrap(), &fname);
         let data = fs::read(full_path).unwrap();
 
         stream
