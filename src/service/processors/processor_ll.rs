@@ -4,15 +4,15 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use rusqlite::Connection;
+use diesel::SqliteConnection;
 
 use crate::{
-    service::db_service::list_all_files_on_db, structures::command_processor::CommandProcessor,
+    dao::file_db_dao::list_all_files_on_db, structures::command_processor::CommandProcessor,
 };
 
 pub struct LLProcessor {
     pub search_directory: String,
-    db_connection_mutex: Arc<Mutex<Connection>>,
+    db_connection_mutex: Arc<Mutex<SqliteConnection>>,
 }
 
 impl CommandProcessor for LLProcessor {
@@ -24,7 +24,7 @@ impl CommandProcessor for LLProcessor {
         println!("processing command: {}", full_command);
         let mut files_string = "".to_owned();
 
-        let all_db_files = list_all_files_on_db(&self.db_connection_mutex.lock().unwrap()).unwrap();
+        let all_db_files = list_all_files_on_db(&mut self.db_connection_mutex.lock().unwrap());
 
         all_db_files.iter().for_each(|file| {
             files_string = format!(
@@ -32,13 +32,14 @@ impl CommandProcessor for LLProcessor {
                 files_string,
                 file.name,
                 file.status,
-                file.last_update.to_rfc3339()
+                file.last_update.unwrap().timestamp_millis()
             );
         });
 
         // println!("{}", files_string);
         let files = format!("{}\r\n", files_string);
         let write_result = stream.write_all(files.as_bytes());
+        println!("server: writed ll result on bufer");
         if write_result.is_err() {
             return false;
         }
@@ -47,7 +48,7 @@ impl CommandProcessor for LLProcessor {
 }
 
 impl LLProcessor {
-    pub fn new(directory: &str, db_connection_mutex: Arc<Mutex<Connection>>) -> Self {
+    pub fn new(directory: &str, db_connection_mutex: Arc<Mutex<SqliteConnection>>) -> Self {
         LLProcessor {
             search_directory: directory.to_owned(),
             db_connection_mutex,

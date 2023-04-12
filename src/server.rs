@@ -1,4 +1,4 @@
-use rusqlite::Connection;
+use diesel::SqliteConnection;
 
 use crate::{
     service::processors::{
@@ -13,7 +13,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-pub async fn run_server(config: &Config, db_connection_mutex: Arc<Mutex<Connection>>) {
+pub async fn run_server(config: &Config, db_connection_mutex: Arc<Mutex<SqliteConnection>>) {
     let port = config.self_port;
     let processors: Arc<Mutex<Vec<CommandProcessorType>>> = Arc::new(Mutex::new(
         prepare_command_processors(config, db_connection_mutex),
@@ -72,7 +72,7 @@ pub async fn receive_data(
 
 pub fn prepare_command_processors(
     config: &Config,
-    db_connection_mutex: Arc<Mutex<Connection>>,
+    db_connection_mutex: Arc<Mutex<SqliteConnection>>,
 ) -> Vec<CommandProcessorType> {
     let mut processors: Vec<CommandProcessorType> = Vec::new();
     let shared_directory = config.shared_directory.as_str();

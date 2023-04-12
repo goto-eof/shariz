@@ -1,4 +1,4 @@
-use rusqlite::Connection;
+use diesel::SqliteConnection;
 
 use crate::structures::command_processor::CommandProcessor;
 use std::{
@@ -10,7 +10,7 @@ use std::{
 
 pub struct DelProcessor {
     pub search_directory: String,
-    pub db_connection_mutex: Arc<Mutex<Connection>>,
+    pub db_connection_mutex: Arc<Mutex<SqliteConnection>>,
 }
 
 impl CommandProcessor for DelProcessor {
@@ -47,7 +47,7 @@ impl CommandProcessor for DelProcessor {
 }
 
 impl DelProcessor {
-    pub fn new(directory: &str, db_connection_mutex: Arc<Mutex<Connection>>) -> Self {
+    pub fn new(directory: &str, db_connection_mutex: Arc<Mutex<SqliteConnection>>) -> Self {
         DelProcessor {
             search_directory: directory.to_owned(),
             db_connection_mutex,
