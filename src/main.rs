@@ -10,6 +10,7 @@ use std::thread;
 use std::time::Duration;
 use util::home_util::print_header;
 mod client;
+mod dao;
 mod server;
 mod service;
 mod structures;

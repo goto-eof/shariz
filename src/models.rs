@@ -1,8 +1,6 @@
+use crate::schema::files;
 use chrono::NaiveDateTime;
 use diesel::{AsChangeset, Identifiable, Insertable, Queryable};
-use serde::{Deserialize, Serialize};
-
-use crate::schema::files;
 
 #[derive(Queryable, PartialEq, Debug, Identifiable, AsChangeset)]
 #[table_name = "files"]

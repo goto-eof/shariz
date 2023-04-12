@@ -7,7 +7,7 @@ use std::{
 use diesel::SqliteConnection;
 
 use crate::{
-    service::file_db_service::list_all_files_on_db, structures::command_processor::CommandProcessor,
+    dao::file_db_dao::list_all_files_on_db, structures::command_processor::CommandProcessor,
 };
 
 pub struct LLProcessor {

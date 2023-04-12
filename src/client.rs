@@ -1,10 +1,8 @@
-use crate::service::file_db_service::{
-    list_all_files_on_db, update_file_delete_status, CREATED, DELETED,
-};
+use crate::dao::file_db_dao::{list_all_files_on_db, update_file_delete_status, CREATED, DELETED};
 use crate::service::file_service::calculate_file_hash;
 use crate::service::processors::processor_local_update::LocalUpdateProcessor;
 use crate::structures::config::Config;
-use chrono::{DateTime, FixedOffset, NaiveDateTime};
+use chrono::NaiveDateTime;
 use core::panic;
 use diesel::SqliteConnection;
 use shariz::models::FileDB;
