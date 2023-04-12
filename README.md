@@ -13,7 +13,7 @@ Shariz, like dropbox, is a file sharing application. Shariz was implemented in R
 
 ![shariz configuration](images/struct.png)
 
- First of all download the latest executable compatible with your OS (Windows, MacOS, Linux) from [here](https://github.com/goto-eof/shariz/releases). Then create the `.env` file and the `configuration.json` file like was done in the next screenshot (do not generate the `sqlite.db` file). Edit the `configuration.json` as described in the previous paragraph. Run shariz from command line `./shariz` (if you are using a Mac, allow execution of unidentified developers, otherwise you will not be able to run the executable). Do the same for the second PC. 
+ First of all download the latest executable compatible with your OS (Windows, MacOS, Linux) from [here](https://github.com/goto-eof/shariz/releases). Then create the `.env` file and the `configuration.json` file like was done in the previous screenshot (do not generate the `sqlite.db` file). Edit the `configuration.json` as described in the next paragraph. Run shariz from command line `./shariz` (if you are using a Mac, allow execution of unidentified developers, otherwise you will not be able to run the executable). Do the same for the second PC. 
 
  # How to configure it?
 
