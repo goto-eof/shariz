@@ -6,7 +6,7 @@ edition = "2021"
 authors = ["Andrei Dodu"]
 
 [dependencies]
-tokio = { version = "1", features = [ "rt", "rt-multi-thread", "macros", "io-util", "net"] } 
+tokio = { version = "1", features = [ "rt", "rt-multi-thread", "macros", "io-util", "net", "time"] } 
 config-file = {version = "0.2.3", features=[ "json"]}
 serde = { version = "1.0.158", features = ["derive"] }
 sha2 = "0.10"

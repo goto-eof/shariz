@@ -11,93 +11,102 @@ use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{Shutdown, TcpStream};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
+use tokio::task::JoinHandle;
+use tokio::time::sleep;
 
-pub fn run_client(config: &Config, db_connection_mutex: Arc<Mutex<SqliteConnection>>) -> () {
+pub async fn run_client(
+    config: &Config,
+    db_connection_mutex: Arc<Mutex<SqliteConnection>>,
+) -> JoinHandle<bool> {
     let shared_directory = config.shared_directory.clone();
     let target_ip = config.target_ip.clone();
     let port = config.target_port;
-    // tokio::spawn(async move {
-    let connection = enstablish_connection(target_ip, port);
-    if connection.is_ok() {
-        let stream = connection.unwrap();
+    tokio::spawn(async move {
+        let connection = enstablish_connection(target_ip, port);
+        if connection.is_ok() {
+            let stream = connection.unwrap();
 
-        let cloned_stream = stream.try_clone();
-        if cloned_stream.is_err() {
-            panic!("failed to clone stream");
-        }
-        let mut cloned_stream = cloned_stream.unwrap();
+            let cloned_stream = stream.try_clone();
+            if cloned_stream.is_err() {
+                panic!("failed to clone stream");
+            }
+            let mut cloned_stream = cloned_stream.unwrap();
 
-        request_for_file_list(&mut cloned_stream);
-        let server_file_list = extract_server_file_list(&stream);
-        let all_db_files =
-            refresh_and_retrieve_all_db_files(&db_connection_mutex, &shared_directory);
+            request_for_file_list(&mut cloned_stream);
+            let server_file_list = extract_server_file_list(&stream);
+            let all_db_files =
+                refresh_and_retrieve_all_db_files(&db_connection_mutex, &shared_directory);
 
-        for file_on_server in server_file_list {
-            if file_on_server.0.trim().len() > 0 {
-                let file_on_db = all_db_files
-                    .iter()
-                    .find(|file_db| file_db.name.eq(&file_on_server.0));
-                let file_path = format!("{}/{}", &shared_directory, file_on_server.0.trim());
+            for file_on_server in server_file_list {
+                if file_on_server.0.trim().len() > 0 {
+                    let file_on_db = all_db_files
+                        .iter()
+                        .find(|file_db| file_db.name.eq(&file_on_server.0));
+                    let file_path = format!("{}/{}", &shared_directory, file_on_server.0.trim());
 
-                if file_on_db.is_some() {
-                    let file_on_db = file_on_db.unwrap();
-                    let file_db_last_update = file_on_db.last_update.unwrap();
+                    if file_on_db.is_some() {
+                        let file_on_db = file_on_db.unwrap();
+                        let file_db_last_update = file_on_db.last_update.unwrap();
 
-                    if file_on_server.1 == 1
-                        && file_on_db.status == 0
-                        && file_db_last_update.le(&file_on_server.2)
-                    {
-                        println!("case: deleted on server, not deleted on client");
-                        file_delete_and_update_status(
-                            &file_path,
-                            file_on_db,
-                            &file_on_server,
-                            &db_connection_mutex,
-                        );
-                    } else if file_on_server.1 == 0
-                        && file_on_db.status == 1
-                        && file_on_server.2.gt(&file_db_last_update)
-                    {
-                        println!("case: not deleted on server, deleted on client");
-                        process_file(
-                            file_on_server,
-                            &mut cloned_stream,
-                            &stream,
-                            &shared_directory,
-                        );
-                    } else {
-                        if file_on_db.status != DELETED
-                            && file_on_server.1 != DELETED
-                            && file_on_db.status != CREATED
-                            && file_on_server.1 != CREATED
+                        if file_on_server.1 == 1
+                            && file_on_db.status == 0
+                            && file_db_last_update.le(&file_on_server.2)
                         {
-                            println!("not expected\ndeleted on client: {}\ndeleted on server: {}\nlast update on client: {}\nlast update on server: {}", file_on_db.status, file_on_server.1, file_db_last_update, file_on_server.2);
+                            println!("case: deleted on server, not deleted on client");
+                            file_delete_and_update_status(
+                                &file_path,
+                                file_on_db,
+                                &file_on_server,
+                                &db_connection_mutex,
+                            );
+                        } else if file_on_server.1 == 0
+                            && file_on_db.status == 1
+                            && file_on_server.2.gt(&file_db_last_update)
+                        {
+                            println!("case: not deleted on server, deleted on client");
+                            process_file(
+                                file_on_server,
+                                &mut cloned_stream,
+                                &stream,
+                                &shared_directory,
+                            );
+                        } else {
+                            if file_on_db.status != DELETED
+                                && file_on_server.1 != DELETED
+                                && file_on_db.status != CREATED
+                                && file_on_server.1 != CREATED
+                            {
+                                println!("not expected\ndeleted on client: {}\ndeleted on server: {}\nlast update on client: {}\nlast update on server: {}", file_on_db.status, file_on_server.1, file_db_last_update, file_on_server.2);
+                            }
                         }
-                    }
-                } else {
-                    if file_on_server.1 == 0 {
-                        process_file(
-                            file_on_server,
-                            &mut cloned_stream,
-                            &stream,
-                            &shared_directory,
-                        );
                     } else {
-                        println!("not expected case");
+                        if file_on_server.1 == 0 {
+                            process_file(
+                                file_on_server,
+                                &mut cloned_stream,
+                                &stream,
+                                &shared_directory,
+                            );
+                        } else {
+                            println!("not expected case");
+                        }
                     }
                 }
             }
+            let result_shutdown = stream.shutdown(Shutdown::Both);
+            if result_shutdown.is_err() {
+                println!("shutdown error: {:?}", result_shutdown.err());
+            }
+            sleep(Duration::from_millis(10000)).await;
+            return true;
+        } else {
+            println!("connection error: {:?}", connection.err());
+            sleep(Duration::from_millis(10000)).await;
+            return true;
         }
-        let result_shutdown = stream.shutdown(Shutdown::Both);
-        if result_shutdown.is_err() {
-            println!("shutdown error: {:?}", result_shutdown.err());
-        }
-        return ();
-    } else {
-        println!("connection error: {:?}", connection.err());
-        return ();
-    }
-    // })
+    })
 }
 
 fn enstablish_connection(address: String, port: u16) -> Result<TcpStream, std::io::Error> {
