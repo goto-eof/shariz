@@ -9,12 +9,13 @@
 # What is Shariz?
 Shariz, like dropbox, is a file sharing application. Shariz was implemented in Rust. For now it allows to share files between 2 computers.
 
-# How it works?
-At startup Shariz loads the target server ip and port from the configuration file and creates a client that will connect to the target server. Meanwhile it makes a connection with the target application, requests for files and downloads them.
+# How to configure and run the standalone?
 
-![shariz flow](images/flow.png)
+![shariz configuration](images/struct.png)
 
-# How to configure it?
+ First of all download the latest executable compatible with your OS (Windows, MacOS, Linux) from [here](https://github.com/goto-eof/shariz/releases). Then create the `.env` file and the `configuration.json` file like was done in the next screenshot (do not generate the `sqlite.db` file). Edit the `configuration.json` as described in the previous paragraph. Run shariz from command line `./shariz` (if you are using a Mac, allow execution of unidentified developers, otherwise you will not be able to run the executable). Do the same for the second PC. 
+
+ # How to configure it?
 
 ![shariz configuration](images/configuration.png)
 
@@ -22,11 +23,10 @@ At startup Shariz loads the target server ip and port from the configuration fil
 
 On the first PC replace the `target_ip` with the others PC connected on the same network. Update also the `shared_directory` property that should point to the directory that will be shared. Do the same on other PC. Add/remove some file from the shared directory of the first PC and magically you will see that the same operation is done also in the shared directory of the second PC.
 
-# How to configure and run the standalone?
+# How it works?
+At startup Shariz loads the target server ip and port from the configuration file and creates a client that will connect to the target server. Meanwhile it makes a connection with the target application, requests for files and downloads them.
 
-![shariz configuration](images/struct.png)
-
- First of all download the latest executable compatible with your OS (Windows, MacOS, Linux) from [here](https://github.com/goto-eof/shariz/releases). Then create the `.env` file and the `configuration.json` file like was done in the previous screenshot (do not generate the `sqlite.db` file). Edit the `configuration.json` as described in the previous paragraph. Run shariz from command line `./shariz` (if you are using a Mac, allow execution of unidentified developers, otherwise you will not be able to run the executable). Do the same for the second PC. 
+![shariz flow](images/flow.png)
 
 # Screenshot
 
