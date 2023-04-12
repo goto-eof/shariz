@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Installing sqlite
-        run: sudo apt install libsqlite3-dev
+        run: cargo install diesel_cli --no-default-features --features "sqlite"
       - name: Compile and release
         uses: rust-build/rust-build.action@v1.4.3
         env:
