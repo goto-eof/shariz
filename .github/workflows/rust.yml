@@ -1,6 +1,5 @@
 on:
-  push:
-    types: [created]
+  push
 permissions:
   contents: write
   packages: write    
