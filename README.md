@@ -28,3 +28,9 @@ On the first PC replace the `target_ip` with the others PC connected on the same
 ```
 sudo apt-get install libsqlite3-dev
 ```
+
+```
+cargo install diesel_cli --no-default-features --features sqlite
+
+diesel migration run
+```

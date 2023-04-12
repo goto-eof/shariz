@@ -32,7 +32,7 @@ impl CommandProcessor for LLProcessor {
                 files_string,
                 file.name,
                 file.status,
-                file.last_update.unwrap()
+                file.last_update.unwrap().timestamp_millis()
             );
         });
 
