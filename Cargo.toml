@@ -19,3 +19,4 @@ libsqlite3-sys = { version = ">=0.17.2, <0.25.0", optional = false, features = [
 diesel = { version = "2.0.0", features = ["sqlite", "chrono"] }
 dotenv = "0.15.0"
 diesel_migrations = "2.0.0"
+futures = "0.3.28"
