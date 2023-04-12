@@ -37,7 +37,13 @@ impl CommandProcessor for PullProcessor {
         let full_path = format!("{}/{}", self.search_directory, &fname);
         let sha2 =
             retrieve_file_hash_from_db(&mut self.db_connection_mutex.lock().unwrap(), &fname);
-        let data = fs::read(full_path).unwrap();
+        let data = fs::read(full_path);
+
+        if data.is_err() {
+            println!("unsync");
+            return false;
+        }
+        let data = data.unwrap();
 
         stream
             .write_all(format!("{};{}\r\n", data.len(), sha2.unwrap()).as_bytes())

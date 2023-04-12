@@ -38,7 +38,7 @@ impl CommandProcessor for LLProcessor {
 
         let files = format!("{}\r\n", files_string);
         let write_result = stream.write_all(files.as_bytes());
-        println!("server: writed ll result on bufer");
+        println!("server: writed ll result on buffer");
         if write_result.is_err() {
             return false;
         }

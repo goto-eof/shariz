@@ -11,7 +11,6 @@ use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{Shutdown, TcpStream};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
-use std::thread;
 use std::time::Duration;
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
@@ -90,7 +89,7 @@ pub async fn run_client(
                                 &shared_directory,
                             );
                         } else {
-                            println!("not expected case");
+                            println!("file alredy sync");
                         }
                     }
                 }
