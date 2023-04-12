@@ -22,7 +22,6 @@ async fn main() {
 
     print_header(&mut stdout(), &config).await;
 
-    // let db_connection = initialize_db();
     let db_connection = establish_connection();
     let db_connection_mutex: Arc<Mutex<SqliteConnection>> = Arc::new(Mutex::new(db_connection));
 
