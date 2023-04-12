@@ -17,7 +17,7 @@ Shariz, like dropbox, is a file sharing application. Shariz was implemented in R
 
  # How to configure it?
 
-![shariz configuration](images/configuration.png)
+![shariz configuration](images/configuration_file.png)
 
 ![shariz configuration](images/dot_env.png)
 
