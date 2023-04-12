@@ -29,7 +29,7 @@ async fn main() {
     run_server(&config, db_connection_mutex.clone()).await;
 
     loop {
-        futures::future::join_all(vec![run_client(&config, db_connection_mutex.clone())]).await;
+        run_client(&config, db_connection_mutex.clone());
         thread::sleep(Duration::from_millis(10000));
     }
 }
