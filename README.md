@@ -24,6 +24,10 @@ On the first PC replace the `target_ip` with the others PC connected on the same
 
 ![shariz flow](screenshot.png)
 
+# Development stack
+
+![shariz flow](dev_stack.png)
+
 # For developers
 ```
 sudo apt-get install libsqlite3-dev
