@@ -1,5 +1,5 @@
 pub mod client;
-pub mod clinet;
+pub mod client;
 pub mod server;
 pub mod service;
 pub mod structures;

@@ -1,23 +1,23 @@
-use crate::service::db_service::{
+use crate::service::file_db_service::{
     list_all_files_on_db, update_file_delete_status, CREATED, DELETED,
 };
 use crate::service::file_service::calculate_file_hash;
 use crate::service::processors::processor_local_update::LocalUpdateProcessor;
 use crate::structures::config::Config;
+use chrono::{DateTime, FixedOffset, NaiveDateTime};
 use core::panic;
+use diesel::SqliteConnection;
+use shariz::models::FileDB;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{Shutdown, TcpStream};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
-
-use chrono::{DateTime, FixedOffset};
-use rusqlite::Connection;
 use tokio::task::JoinHandle;
 
 pub async fn run_client(
     config: &Config,
-    db_connection_mutex: Arc<Mutex<Connection>>,
+    db_connection_mutex: Arc<Mutex<SqliteConnection>>,
 ) -> JoinHandle<()> {
     let shared_directory = config.shared_directory.clone();
     let target_ip = config.target_ip.clone();
@@ -47,10 +47,11 @@ pub async fn run_client(
 
                     if file_on_db.is_some() {
                         let file_on_db = file_on_db.unwrap();
+                        let file_db_last_update = file_on_db.last_update.unwrap();
 
                         if file_on_server.1 == 1
                             && file_on_db.status == 0
-                            && file_on_db.last_update.le(&file_on_server.2)
+                            && file_db_last_update.le(&file_on_server.2)
                         {
                             println!("case: deleted on server, not deleted on client");
                             file_delete_and_update_status(
@@ -61,7 +62,7 @@ pub async fn run_client(
                             );
                         } else if file_on_server.1 == 0
                             && file_on_db.status == 1
-                            && file_on_server.2.gt(&file_on_db.last_update)
+                            && file_on_server.2.gt(&file_db_last_update)
                         {
                             println!("case: not deleted on server, deleted on client");
                             process_file(
@@ -76,7 +77,7 @@ pub async fn run_client(
                                 && file_on_db.status != CREATED
                                 && file_on_server.1 != CREATED
                             {
-                                println!("not expected\ndeleted on client: {}\ndeleted on server: {}\nlast update on client: {}\nlast update on server: {}", file_on_db.status, file_on_server.1, file_on_db.last_update, file_on_server.2);
+                                println!("not expected\ndeleted on client: {}\ndeleted on server: {}\nlast update on client: {}\nlast update on server: {}", file_on_db.status, file_on_server.1, file_db_last_update, file_on_server.2);
                             }
                         }
                     } else {
@@ -111,9 +112,9 @@ fn enstablish_connection(address: String, port: u16) -> Result<TcpStream, std::i
 
 fn file_delete_and_update_status(
     file_path: &String,
-    file_on_db: &crate::structures::file::DbFile,
-    file_on_server: &(String, i32, DateTime<FixedOffset>),
-    db_connection_mutex: &Arc<Mutex<Connection>>,
+    file_on_db: &FileDB,
+    file_on_server: &(String, i32, NaiveDateTime),
+    db_connection_mutex: &Arc<Mutex<SqliteConnection>>,
 ) {
     if Path::new(file_path).exists() {
         println!(
@@ -123,7 +124,7 @@ fn file_delete_and_update_status(
 
         fs::remove_file(file_path).unwrap();
         update_file_delete_status(
-            &db_connection_mutex.lock().unwrap(),
+            &mut db_connection_mutex.lock().unwrap(),
             file_on_server.0.trim().to_owned(),
             1,
         );
@@ -131,23 +132,23 @@ fn file_delete_and_update_status(
 }
 
 fn refresh_and_retrieve_all_db_files(
-    db_connection_mutex: &Arc<Mutex<Connection>>,
+    db_connection_mutex: &Arc<Mutex<SqliteConnection>>,
     shared_directory: &str,
-) -> Vec<crate::structures::file::DbFile> {
+) -> Vec<FileDB> {
     let connection = db_connection_mutex.lock();
     if connection.is_err() {
         panic!("unable to open db connection");
     }
-    let connection = connection.unwrap();
-    let result = LocalUpdateProcessor::sync_disk_with_db(&connection, shared_directory);
+    let mut connection = connection.unwrap();
+    let result = LocalUpdateProcessor::sync_disk_with_db(&mut connection, shared_directory);
     if !result {
         panic!("unable to sync disk with db");
     }
-    list_all_files_on_db(&connection).unwrap()
+    list_all_files_on_db(&mut connection)
 }
 
 fn process_file(
-    file: (String, i32, DateTime<FixedOffset>),
+    file: (String, i32, NaiveDateTime),
     cloned_stream: &mut TcpStream,
     stream: &TcpStream,
     shared_directory: &String,
@@ -182,7 +183,7 @@ fn send_ko(cloned_stream: &mut TcpStream) {
     }
 }
 
-fn extract_server_file_list(stream: &TcpStream) -> Vec<(String, i32, DateTime<FixedOffset>)> {
+fn extract_server_file_list(stream: &TcpStream) -> Vec<(String, i32, NaiveDateTime)> {
     let mut response = String::new();
     let mut buf_reader = BufReader::new(stream);
     let read_result = buf_reader.read_line(&mut response);
@@ -202,7 +203,8 @@ fn extract_server_file_list(stream: &TcpStream) -> Vec<(String, i32, DateTime<Fi
                 return (
                     vector.get(0).unwrap().to_string(),
                     vector.get(1).unwrap().parse::<i32>().unwrap(),
-                    DateTime::parse_from_rfc3339(vector.get(2).unwrap()).unwrap(),
+                    NaiveDateTime::from_timestamp_millis(vector.get(2).unwrap().parse().unwrap())
+                        .unwrap(), // DateTime::parse_from_rfc3339(vector.get(2).unwrap()).unwrap(),
                 );
             })
             .collect();

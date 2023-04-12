@@ -1,9 +1,7 @@
-use rusqlite::Connection;
+use diesel::SqliteConnection;
 
-use crate::service::db_service::retrieve_file_hash_from_db;
-use crate::{
-    service::file_service::calculate_file_hash, structures::command_processor::CommandProcessor,
-};
+use crate::service::file_db_service::retrieve_file_hash_from_db;
+use crate::structures::command_processor::CommandProcessor;
 use std::str;
 use std::sync::{Arc, Mutex};
 use std::{
@@ -14,7 +12,7 @@ use std::{
 
 pub struct PullProcessor {
     pub search_directory: String,
-    pub db_connection_mutex: Arc<Mutex<Connection>>,
+    pub db_connection_mutex: Arc<Mutex<SqliteConnection>>,
 }
 
 impl CommandProcessor for PullProcessor {
@@ -37,7 +35,8 @@ impl CommandProcessor for PullProcessor {
         let fname = fname.get(1).unwrap().trim();
 
         let full_path = format!("{}/{}", self.search_directory, &fname);
-        let sha2 = retrieve_file_hash_from_db(&self.db_connection_mutex.lock().unwrap(), &fname);
+        let sha2 =
+            retrieve_file_hash_from_db(&mut self.db_connection_mutex.lock().unwrap(), &fname);
         let data = fs::read(full_path).unwrap();
 
         stream
@@ -76,7 +75,7 @@ impl CommandProcessor for PullProcessor {
 }
 
 impl PullProcessor {
-    pub fn new(directory: &str, db_connection_mutex: Arc<Mutex<Connection>>) -> Self {
+    pub fn new(directory: &str, db_connection_mutex: Arc<Mutex<SqliteConnection>>) -> Self {
         PullProcessor {
             search_directory: directory.to_owned(),
             db_connection_mutex,
