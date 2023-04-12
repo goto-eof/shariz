@@ -59,10 +59,10 @@ pub async fn receive_data(
                 for processor in processors.iter() {
                     if processor.accept(&line) {
                         let operation_result = processor.process(&line, &mut stream_clone);
-                        if !operation_result {
-                            println!("failed to execute the `{}` operation", &line);
-                            break;
-                        }
+                        // if !operation_result {
+                        println!("failed to execute the `{}` operation", &line);
+                        // break;
+                        // }
                     }
                 }
             }

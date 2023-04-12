@@ -29,6 +29,6 @@ async fn main() {
 
     loop {
         run_client(&config, db_connection_mutex.clone());
-        thread::sleep(Duration::from_millis(10000));
+        // thread::sleep(Duration::from_millis(10000));
     }
 }

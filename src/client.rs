@@ -88,10 +88,10 @@ pub fn run_client(config: &Config, db_connection_mutex: Arc<Mutex<SqliteConnecti
                 }
             }
         }
-        let result_shutdown = stream.shutdown(Shutdown::Both);
-        if result_shutdown.is_err() {
-            println!("shutdown error: {:?}", result_shutdown.err());
-        }
+        // let result_shutdown = stream.shutdown(Shutdown::Both);
+        // if result_shutdown.is_err() {
+        //     println!("shutdown error: {:?}", result_shutdown.err());
+        // }
         return ();
     } else {
         println!("connection error: {:?}", connection.err());
