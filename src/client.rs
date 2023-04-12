@@ -96,7 +96,7 @@ pub async fn run_client(
             }
             let result_shutdown = stream.shutdown(Shutdown::Both);
             if result_shutdown.is_err() {
-                println!("shutdown error");
+                println!("shutdown error: {:?}", result_shutdown.err());
             }
             return ();
         } else {
@@ -204,7 +204,7 @@ fn extract_server_file_list(stream: &TcpStream) -> Vec<(String, i32, NaiveDateTi
                     vector.get(0).unwrap().to_string(),
                     vector.get(1).unwrap().parse::<i32>().unwrap(),
                     NaiveDateTime::from_timestamp_millis(vector.get(2).unwrap().parse().unwrap())
-                        .unwrap(), // DateTime::parse_from_rfc3339(vector.get(2).unwrap()).unwrap(),
+                        .unwrap(),
                 );
             })
             .collect();

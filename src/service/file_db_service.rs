@@ -49,18 +49,17 @@ pub fn update_file_delete_status(
     fname: String,
     fstatus: i32,
 ) -> bool {
-    let file_on_db: FileDB = files.filter(name.eq(&fname)).first(connection).unwrap();
-
-    let file = FileDB {
-        id: file_on_db.id,
+    let model_db = UpdateFileDB {
         last_update: Some(Utc::now().naive_utc()),
-        status: fstatus,
-        name: fname,
-        sha2: file_on_db.sha2,
+        sha2: None,
+        status: Some(fstatus),
     };
+    let update_result = diesel::update(files)
+        .filter(name.eq(&fname))
+        .set(model_db)
+        .execute(connection);
 
-    let post = diesel::update(files).set(file).execute(connection);
-    return post.is_ok();
+    return update_result.is_ok();
 }
 
 pub fn update_file_sha2(connection: &mut SqliteConnection, fname: String, fsha2: String) -> bool {
@@ -93,7 +92,7 @@ pub fn insert_file(
             status: fstatus,
         })
         .execute(connection);
-
+    println!("DB: inserted in db: {:?}=>{:?}", fname, result);
     return result.is_ok();
 }
 

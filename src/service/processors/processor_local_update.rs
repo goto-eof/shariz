@@ -20,7 +20,10 @@ pub struct LocalUpdateProcessor {
 
 impl CommandProcessor for LocalUpdateProcessor {
     fn accept(&self, root_command: &str) -> bool {
-        println!("automatic command execution: {:?}", root_command);
+        println!(
+            "server: automatic command execution the i will execute: {:?}",
+            root_command
+        );
         return true;
     }
 
@@ -50,6 +53,7 @@ impl LocalUpdateProcessor {
         if files_result.is_err() {
             return false;
         }
+        println!("server: red files from directory");
         let files = files_result.unwrap();
         let mut files_on_disk: Vec<String> = vec![];
         for file_result in files {
@@ -61,6 +65,7 @@ impl LocalUpdateProcessor {
             let file_name = extract_fname(&file.path().to_string_lossy().to_string());
             files_on_disk.push(file_name);
         }
+        println!("server: files on disk {:?}", files_on_disk);
         let files_on_db = list_all_files_on_db(connection);
         let files_name_on_db: Vec<String> =
             files_on_db.iter().map(|file| file.name.clone()).collect();
