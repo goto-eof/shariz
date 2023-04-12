@@ -26,7 +26,7 @@ On the first PC replace the `target_ip` with the others PC connected on the same
 
 ![shariz configuration](images/struct.png)
 
- First of all download the latest executable compatible with your OS (Windows, MacOS, Linux) from [here](https://github.com/goto-eof/shariz/releases). Then create the .env file and the configuration.json file like was done in the previous screenshot. Edit the configuration.json as described in the previous paragraph. Run shariz from command line ./shariz. Do the same for the second PC. 
+ First of all download the latest executable compatible with your OS (Windows, MacOS, Linux) from [here](https://github.com/goto-eof/shariz/releases). Then create the `.env` file and the `configuration.json` file like was done in the previous screenshot (do not generate the `sqlite.db` file). Edit the `configuration.json` as described in the previous paragraph. Run shariz from command line `./shariz` (if you are using a Mac, allow execution of unidentified developers, otherwise you will not be able to run the executable). Do the same for the second PC. 
 
 # Screenshot
 
@@ -46,3 +46,8 @@ cargo install diesel_cli --no-default-features --features sqlite
 
 diesel migration run
 ```
+
+
+# Tests
+
+I tested the application on a Mac and a Linux computer and it works fine (perhaps there are some bugs that I should fix).
