@@ -1,7 +1,7 @@
 use crate::{
     dao::{
         self,
-        file_db_dao::{self, insert_file, update_file_delete_status},
+        file_db_dao::{self, insert_file, update_file_delete_status, update_file_hash},
     },
     service::file_service::{calculate_file_hash, extract_fname},
     structures::command_processor::CommandProcessor,
@@ -103,6 +103,13 @@ impl LocalUpdateProcessor {
                         (&file_on_db.name).to_string(),
                         file_db_dao::CREATED,
                     );
+                    let full_path = format!("{}/{}", search_directory, file_on_db.name);
+                    let sha2 = calculate_file_hash(&full_path);
+                    if sha2.is_none() {
+                        println!("unable to calculate sha2 of file: {}", file_on_db.name);
+                    } else {
+                        update_file_hash(connection, (&file_on_db.name).to_string(), sha2.unwrap());
+                    }
                 }
             }
         });
