@@ -76,7 +76,10 @@ pub async fn run_client(
                             && !file_on_server.3.eq(&file_on_db.sha2)
                             && file_db_last_update.ge(&file_on_server.2)
                         {
-                            println!("case: file corruption");
+                            println!(
+                                "case: file corruption: {}!={}",
+                                file_on_server.3, file_on_db.sha2
+                            );
                             process_file(
                                 file_on_server,
                                 &mut cloned_stream,
