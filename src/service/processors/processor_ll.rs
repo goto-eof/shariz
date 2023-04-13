@@ -28,11 +28,12 @@ impl CommandProcessor for LLProcessor {
 
         all_db_files.iter().for_each(|file| {
             files_string = format!(
-                "{}{};{};{},",
+                "{}{};{};{};{},",
                 files_string,
                 file.name,
                 file.status,
-                file.last_update.unwrap().timestamp_millis()
+                file.last_update.unwrap().timestamp_millis(),
+                file.sha2
             );
         });
 

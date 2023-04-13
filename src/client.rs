@@ -64,7 +64,19 @@ pub async fn run_client(
                             && file_on_db.status == 1
                             && file_on_server.2.gt(&file_db_last_update)
                         {
-                            println!("case: not deleted on server, deleted on client");
+                            println!("case: not deleted on server, deleted on client before");
+                            process_file(
+                                file_on_server,
+                                &mut cloned_stream,
+                                &stream,
+                                &shared_directory,
+                            );
+                        } else if file_on_server.1 == CREATED
+                            && file_on_db.status == CREATED
+                            && !file_on_server.3.eq(&file_on_db.sha2)
+                            && file_db_last_update.ge(&file_on_server.2)
+                        {
+                            println!("case: file corruption");
                             process_file(
                                 file_on_server,
                                 &mut cloned_stream,
@@ -82,6 +94,7 @@ pub async fn run_client(
                         }
                     } else {
                         if file_on_server.1 == 0 {
+                            println!("downloading file...");
                             process_file(
                                 file_on_server,
                                 &mut cloned_stream,
@@ -115,7 +128,7 @@ fn enstablish_connection(address: String, port: u16) -> Result<TcpStream, std::i
 fn file_delete_and_update_status(
     file_path: &String,
     file_on_db: &FileDB,
-    file_on_server: &(String, i32, NaiveDateTime),
+    file_on_server: &(String, i32, NaiveDateTime, String),
     db_connection_mutex: &Arc<Mutex<SqliteConnection>>,
 ) {
     if Path::new(file_path).exists() {
@@ -150,28 +163,36 @@ fn refresh_and_retrieve_all_db_files(
 }
 
 fn process_file(
-    file: (String, i32, NaiveDateTime),
+    file: (String, i32, NaiveDateTime, String),
     cloned_stream: &mut TcpStream,
     stream: &TcpStream,
     shared_directory: &String,
 ) {
+    println!("client: make a pull request...");
     make_pull_request(file.0.as_str(), cloned_stream);
 
     let opt_file_size_hash = size_sha2_request(stream);
+    println!(
+        "client: received size and file hash: {:?}",
+        opt_file_size_hash
+    );
     if opt_file_size_hash.is_none() {
         println!("sending ko (1)");
         send_ko(cloned_stream);
     }
     let (file_size, file_hash) = opt_file_size_hash.unwrap();
     let (fname, file_to_save) = calculate_file_to_save(file.0.as_str(), shared_directory);
-
+    println!("client: I'll save the file {} in {}", fname, file_to_save);
     if !Path::new(&file_to_save).exists()
         || Path::new(&file_to_save).exists()
             && file_size != fs::metadata(&file_to_save).unwrap().len()
         || calculate_file_hash(&file_to_save).unwrap() != file_hash
     {
+        println!("client: requesting file to server...");
         send_data_request(cloned_stream);
+        println!("client: extracting data from the stream....");
         let buffer = extract_file_from_stream(file_size, cloned_stream);
+        println!("client: writing file...");
         override_file(buffer, shared_directory, fname);
     } else {
         send_ko(cloned_stream);
@@ -180,12 +201,13 @@ fn process_file(
 
 fn send_ko(cloned_stream: &mut TcpStream) {
     let write_result = cloned_stream.write("KO\r\n".as_bytes());
+    println!("sent KO to serve");
     if write_result.is_err() {
         println!("can't send respond to server: {:?}", write_result);
     }
 }
 
-fn extract_server_file_list(stream: &TcpStream) -> Vec<(String, i32, NaiveDateTime)> {
+fn extract_server_file_list(stream: &TcpStream) -> Vec<(String, i32, NaiveDateTime, String)> {
     let mut response = String::new();
     let mut buf_reader = BufReader::new(stream);
     let read_result = buf_reader.read_line(&mut response);
@@ -207,6 +229,7 @@ fn extract_server_file_list(stream: &TcpStream) -> Vec<(String, i32, NaiveDateTi
                     vector.get(1).unwrap().parse::<i32>().unwrap(),
                     NaiveDateTime::from_timestamp_millis(vector.get(2).unwrap().parse().unwrap())
                         .unwrap(),
+                    vector.get(3).unwrap().to_string(),
                 );
             })
             .collect();
