@@ -87,7 +87,7 @@ impl LocalUpdateProcessor {
         }
         files_on_db.iter().for_each(|file_on_db| {
             if !files_on_disk.contains(&file_on_db.name) {
-                if file_on_db.status != file_db_dao::DELETED {
+                if file_on_db.status == file_db_dao::CREATED {
                     println!("----> delete {}", &file_on_db.name);
                     update_file_delete_status(
                         connection,
@@ -96,7 +96,7 @@ impl LocalUpdateProcessor {
                     );
                 }
             } else {
-                if file_on_db.status != file_db_dao::CREATED {
+                if file_on_db.status == file_db_dao::DELETED {
                     println!("----> undelete {}", &file_on_db.name);
                     update_file_delete_status(
                         connection,

@@ -60,8 +60,8 @@ pub async fn run_client(
                                 &file_on_server,
                                 &db_connection_mutex,
                             );
-                        } else if file_on_server.1 == 0
-                            && file_on_db.status == 1
+                        } else if file_on_server.1 == CREATED
+                            && file_on_db.status == DELETED
                             && file_on_server.2.gt(&file_db_last_update)
                         {
                             println!("case: not deleted on server, deleted on client before");

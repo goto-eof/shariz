@@ -49,7 +49,7 @@ pub fn update_file_delete_status(
 
 pub fn update_file_hash(connection: &mut SqliteConnection, fname: String, fsha2: String) -> bool {
     let model_db = UpdateFileDB {
-        last_update: Some(Utc::now().naive_utc()),
+        last_update: None,
         sha2: Some(fsha2),
         status: None,
     };
