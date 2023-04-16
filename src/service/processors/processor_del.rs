@@ -6,6 +6,7 @@ use crate::{
     structures::command_processor::CommandProcessor,
 };
 use std::{
+    fs,
     io::Write,
     net::TcpStream,
     sync::{Arc, Mutex},
@@ -33,7 +34,7 @@ impl CommandProcessor for DelProcessor {
             println!("server: invalid command 2: {}", full_command);
         }
         let filename = filename.unwrap();
-        // let fname = format!("{}/{}", self.search_directory, filename);
+        let fname = format!("{}/{}", self.search_directory, filename);
 
         let file_on_db: Option<FileDB> =
             find_file_on_db(&mut self.db_connection_mutex.lock().unwrap(), filename);
@@ -48,7 +49,12 @@ impl CommandProcessor for DelProcessor {
                 &mut self.db_connection_mutex.lock().unwrap(),
                 &file_on_db.name,
             ) {
-                println!("server: record deleted successfully");
+                let result = fs::remove_file(fname);
+                if result.is_err() {
+                    println!("server: ERROR deleting file");
+                } else {
+                    println!("server: record and file deleted successfully");
+                }
             } else {
                 println!("server: ERROR file not deleted");
             }

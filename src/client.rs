@@ -115,8 +115,8 @@ pub async fn run_client(
                 }
             }
 
-            // let all_db_files =
-            //     refresh_and_retrieve_all_db_files(&db_connection_mutex, &shared_directory);
+            let all_db_files =
+                refresh_and_retrieve_all_db_files(&db_connection_mutex, &shared_directory);
 
             all_db_files.iter().for_each(|file_db| {
                 if file_db.status == DELETED {
