@@ -126,7 +126,6 @@ pub async fn run_client(
                         println!("client: server deleted file successfully!");
                         if delete_file_db(&mut db_connection_mutex.lock().unwrap(), &file_db.name) {
                             println!("client: also client deleted record");
-                            x
                         } else {
                             println!("client: ERROR deleting record");
                         }
