@@ -19,26 +19,32 @@ impl CommandProcessor for DelProcessor {
     }
 
     fn process(&self, full_command: &str, stream: &mut TcpStream) -> bool {
-        println!("processing command: {}", full_command);
+        println!("server: processing command: {}", full_command);
         let command = full_command.split(";").collect::<Vec<&str>>();
         if command.len() != 2 {
-            println!("invalid command: {}", full_command);
+            println!("server: invalid command: {}", full_command);
             return false;
         }
         let filename = command.get(1);
         if filename.is_none() {
-            println!("invalid command 2: {}", full_command);
+            println!("server: invalid command 2: {}", full_command);
         }
         let filename = filename.unwrap();
         let fname = format!("{}/{}", self.search_directory, filename);
         let file_remove_result = fs::remove_file(fname);
         if file_remove_result.is_err() {
-            println!("error removing file: {:?}", file_remove_result.err());
+            println!(
+                "server: error removing file: {:?}",
+                file_remove_result.err()
+            );
             return false;
         }
         let write_result = stream.write_all("OK\r\n".as_bytes());
         if write_result.is_err() {
-            println!("error responding to client: {:?}", write_result.err());
+            println!(
+                "server: error responding to client: {:?}",
+                write_result.err()
+            );
             return false;
         }
 

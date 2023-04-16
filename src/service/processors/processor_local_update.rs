@@ -33,7 +33,7 @@ impl CommandProcessor for LocalUpdateProcessor {
         let search_directory = self.search_directory.clone();
         let connection = self.db_connection_mutex.lock();
         if connection.is_err() {
-            println!("error db connection");
+            println!("server: error db connection");
             return false;
         }
         let mut connection = connection.unwrap();
@@ -50,7 +50,7 @@ impl LocalUpdateProcessor {
     }
 
     pub fn sync_disk_with_db(connection: &mut SqliteConnection, search_directory: &str) -> bool {
-        println!("processing command: SYNCHRONIZE");
+        println!("server: processing command: SYNCHRONIZE");
         let files_result = fs::read_dir(&search_directory);
         if files_result.is_err() {
             return false;
@@ -60,7 +60,7 @@ impl LocalUpdateProcessor {
         let mut files_on_disk: Vec<String> = vec![];
         for file_result in files {
             if file_result.is_err() {
-                println!("unable to list file");
+                println!("server: unable to list file");
                 return false;
             }
             let file = file_result.unwrap();
@@ -79,7 +79,7 @@ impl LocalUpdateProcessor {
             {
                 let sha2 = calculate_file_hash(&full_path);
                 if sha2.is_none() {
-                    println!("unable to calculate sha2 of file: {}", file_on_disk);
+                    println!("server: unable to calculate sha2 of file: {}", file_on_disk);
                 } else {
                     insert_file(connection, &file_on_disk, 0, sha2.unwrap().as_str());
                 }
@@ -88,7 +88,7 @@ impl LocalUpdateProcessor {
         files_on_db.iter().for_each(|file_on_db| {
             if !files_on_disk.contains(&file_on_db.name) {
                 if file_on_db.status == file_db_dao::CREATED {
-                    println!("----> delete {}", &file_on_db.name);
+                    println!("server: ----> delete {}", &file_on_db.name);
                     update_file_delete_status(
                         connection,
                         (&file_on_db.name).to_string(),
@@ -97,7 +97,7 @@ impl LocalUpdateProcessor {
                 }
             } else {
                 if file_on_db.status == file_db_dao::DELETED {
-                    println!("----> undelete {}", &file_on_db.name);
+                    println!("server: ----> undelete {}", &file_on_db.name);
                     update_file_delete_status(
                         connection,
                         (&file_on_db.name).to_string(),

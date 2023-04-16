@@ -21,14 +21,14 @@ impl CommandProcessor for PullProcessor {
     }
 
     fn process(&self, full_command: &str, stream: &mut TcpStream) -> bool {
-        println!("processing command: {}", full_command);
+        println!("server: processing command: {}", full_command);
         if full_command.len() == 0 {
-            println!("error: command_length is 0");
+            println!("server: error: command_length is 0");
             return false;
         }
         let fname = full_command.split(";").collect::<Vec<&str>>();
         if fname.len() != 2 {
-            println!("error: invalid command");
+            println!("server: error: invalid command");
             return false;
         }
 
@@ -40,7 +40,7 @@ impl CommandProcessor for PullProcessor {
         let data = fs::read(full_path);
 
         if data.is_err() {
-            println!("unsync");
+            println!("server: unsync");
             return false;
         }
         let data = data.unwrap();
@@ -52,14 +52,14 @@ impl CommandProcessor for PullProcessor {
         let read_result = stream.read(&mut buffer);
 
         if read_result.is_err() {
-            println!("error: client did not send OK");
+            println!("server: error: client did not send OK");
             return false;
         }
 
         let from_utf8_result = str::from_utf8(&buffer);
         if from_utf8_result.is_err() {
             println!(
-                "error: client did not send OK (2): {:?}",
+                "server: error: client did not send OK (2): {:?}",
                 from_utf8_result.err()
             );
             return false;
@@ -70,11 +70,11 @@ impl CommandProcessor for PullProcessor {
             // write data
             let write_result = stream.write_all(&data);
             if write_result.is_err() {
-                println!("error: client did not send OK (4)");
+                println!("server: error: client did not send OK (4)");
                 return false;
             }
         } else {
-            println!("error: client did not send OK (3)");
+            println!("server: error: client did not send OK (3)");
         }
         return true;
     }

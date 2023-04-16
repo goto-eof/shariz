@@ -21,7 +21,7 @@ impl CommandProcessor for LLProcessor {
     }
 
     fn process(&self, full_command: &str, stream: &mut TcpStream) -> bool {
-        println!("processing command: {}", full_command);
+        println!("server: processing command: {}", full_command);
         let mut files_string = "".to_owned();
 
         let all_db_files = list_all_files_on_db(&mut self.db_connection_mutex.lock().unwrap());
