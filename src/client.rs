@@ -1,4 +1,6 @@
-use crate::dao::file_dao::{list_all_files_on_db, update_file_delete_status, CREATED, DELETED};
+use crate::dao::file_dao::{
+    freeze, list_all_files_on_db, update_file_delete_status, CREATED, DELETED,
+};
 use crate::service::file_service::calculate_file_hash;
 use crate::service::processors::processor_local_update::LocalUpdateProcessor;
 use crate::structures::config::Config;
@@ -88,6 +90,12 @@ pub async fn run_client(
                                 &stream,
                                 &shared_directory,
                             );
+                        } else if file_on_server.1 == DELETED && file_on_db.status == DELETED {
+                            freeze(
+                                &mut db_connection_mutex.lock().unwrap(),
+                                file_on_server.0,
+                                1,
+                            );
                         } else {
                             // println!("client: deleted on client: {} - deleted on server: {} - last update on client: {} - last update on server: {}", file_on_db.status, file_on_server.1, file_db_last_update, file_on_server.2);
                         }
@@ -101,7 +109,7 @@ pub async fn run_client(
                                 &shared_directory,
                             );
                         } else {
-                            println!("client: file alredy sync");
+                            //println!("client: file alredy sync");
                         }
                     }
                 }

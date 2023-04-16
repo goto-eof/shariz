@@ -3,13 +3,14 @@ use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnec
 
 use shariz::models::{FileDB, NewFileDB, UpdateFileDB};
 use shariz::schema::files::dsl::files;
-use shariz::schema::files::{name, sha2};
+use shariz::schema::files::{frozen, name, sha2};
 
 pub const DELETED: i32 = 1;
 pub const CREATED: i32 = 0;
 
 pub fn list_all_files_on_db(connection: &mut SqliteConnection) -> Vec<FileDB> {
     let results = files
+        .filter(frozen.eq(0))
         .load::<FileDB>(connection)
         .expect("DB: Error loading files");
     return results;
@@ -37,6 +38,7 @@ pub fn update_file_delete_status(
     let model_db = UpdateFileDB {
         last_update: Some(Utc::now().naive_utc()),
         sha2: None,
+        frozen: Some(if fstatus == CREATED { 1 } else { 0 }),
         status: Some(fstatus),
     };
     let update_result = diesel::update(files)
@@ -52,6 +54,7 @@ pub fn update_file_hash(connection: &mut SqliteConnection, fname: String, fsha2:
         last_update: None,
         sha2: Some(fsha2),
         status: None,
+        frozen: None,
     };
     let update_result = diesel::update(files)
         .filter(name.eq(&fname))
@@ -73,8 +76,24 @@ pub fn insert_file(
             name: fname,
             sha2: fsha2,
             status: fstatus,
+            frozen: 0,
         })
         .execute(connection);
     println!("DB: inserted in db: {:?}=>{:?}", fname, result);
     return result.is_ok();
+}
+
+pub fn freeze(connection: &mut SqliteConnection, fname: String, ffreeze: i32) -> bool {
+    let model_db = UpdateFileDB {
+        last_update: Some(Utc::now().naive_utc()),
+        sha2: None,
+        frozen: Some(ffreeze),
+        status: None,
+    };
+    let update_result = diesel::update(files)
+        .filter(name.eq(&fname))
+        .set(model_db)
+        .execute(connection);
+
+    return update_result.is_ok();
 }
