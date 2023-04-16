@@ -6,8 +6,6 @@ use diesel::SqliteConnection;
 use shariz::establish_connection;
 use std::io::stdout;
 use std::sync::{Arc, Mutex};
-use std::thread;
-use std::time::Duration;
 use util::home_util::print_header;
 mod client;
 mod dao;
