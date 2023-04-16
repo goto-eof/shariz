@@ -49,27 +49,44 @@ impl CommandProcessor for DelProcessor {
                 &mut self.db_connection_mutex.lock().unwrap(),
                 &file_on_db.name,
             ) {
-                let result = fs::remove_file(fname);
-                if result.is_err() {
-                    println!("server: ERROR deleting file");
-                } else {
-                    println!("server: record and file deleted successfully");
-                }
+                println!("server: record and file deleted successfully");
+                send_response(stream, "OK");
+                return true;
+
+                // let result = fs::remove_file(fname);
+                // if result.is_err() {
+                //     println!("server: ERROR deleting file");
+                //     send_response(stream, "KO");
+                //     return false;
+
+                // } else {
+                //     println!("server: record and file deleted successfully");
+                //     send_response(stream, "OK");
+                //     return true;
+                // }
             } else {
                 println!("server: ERROR file not deleted");
+                send_response(stream, "KO");
+                return false;
             }
-        }
-        let write_result = stream.write_all("OK\r\n".as_bytes());
-        if write_result.is_err() {
-            println!(
-                "server: error responding to client: {:?}",
-                write_result.err()
-            );
+        } else {
+            println!("server: ERROR file not deleted on db");
+            send_response(stream, "KO");
             return false;
         }
-
-        return true;
     }
+}
+
+fn send_response(stream: &mut TcpStream, message: &str) -> bool {
+    let write_result = stream.write_all(format!("{}\r\n", message).as_bytes());
+    if write_result.is_err() {
+        println!(
+            "server: error responding to client: {:?}",
+            write_result.err()
+        );
+        return false;
+    }
+    return true;
 }
 
 impl DelProcessor {
