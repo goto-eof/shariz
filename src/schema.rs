@@ -5,7 +5,6 @@ diesel::table! {
         id -> Integer,
         name -> Text,
         status -> Integer,
-        frozen -> Nullable<Integer>,
         sha2 -> Text,
         last_update -> Nullable<Timestamp>,
     }

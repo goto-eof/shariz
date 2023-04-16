@@ -68,7 +68,7 @@ impl LocalUpdateProcessor {
             files_on_disk.push(file_name);
         }
         println!("server: files on disk {}", files_on_disk.len());
-        let files_on_db = list_all_files_on_db(connection, true);
+        let files_on_db = list_all_files_on_db(connection);
         let files_name_on_db: Vec<String> =
             files_on_db.iter().map(|file| file.name.clone()).collect();
         for file_on_disk in files_on_disk.clone() {

@@ -20,8 +20,7 @@ impl CommandProcessor for LLProcessor {
         println!("server: processing command: {}", full_command);
         let mut files_string = "".to_owned();
 
-        let all_db_files =
-            list_all_files_on_db(&mut self.db_connection_mutex.lock().unwrap(), false);
+        let all_db_files = list_all_files_on_db(&mut self.db_connection_mutex.lock().unwrap());
         println!("server: DB result of ll: {}", all_db_files.len());
         all_db_files.iter().for_each(|file| {
             files_string = format!(
