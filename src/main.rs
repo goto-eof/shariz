@@ -30,6 +30,6 @@ async fn main() {
         .await
         .unwrap()
     {
-        println!("retrying....");
+        println!("client: retrying connection....");
     }
 }
