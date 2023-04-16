@@ -322,6 +322,7 @@ fn size_sha2_request(stream: &TcpStream) -> Option<(u64, String)> {
         .collect();
     let file_size_result = buffer.get(0).unwrap().trim().parse();
     if file_size_result.is_err() {
+        println!("clinet: invalid file size received from server");
         return None;
     }
     let file_size: u64 = file_size_result.unwrap();

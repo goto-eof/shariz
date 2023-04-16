@@ -44,7 +44,7 @@ pub fn update_file_delete_status(
     let model_db = UpdateFileDB {
         last_update: Some(Utc::now().naive_utc()),
         sha2: None,
-        frozen: Some(if fstatus == CREATED { 1 } else { 0 }),
+        frozen: Some(if fstatus == CREATED { 0 } else { 1 }),
         status: Some(fstatus),
     };
     let update_result = diesel::update(files)
