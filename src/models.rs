@@ -3,7 +3,7 @@ use chrono::NaiveDateTime;
 use diesel::{AsChangeset, Identifiable, Insertable, Queryable};
 
 #[derive(Queryable, PartialEq, Debug, Identifiable, AsChangeset)]
-#[table_name = "files"]
+#[diesel(table_name = files)]
 pub struct FileDB {
     pub id: i32,
     pub name: String,
@@ -13,7 +13,7 @@ pub struct FileDB {
 }
 
 #[derive(AsChangeset)]
-#[table_name = "files"]
+#[diesel(table_name = files)]
 pub struct UpdateFileDB {
     pub status: Option<i32>,
     pub sha2: Option<String>,
