@@ -1,5 +1,5 @@
 use crate::dao::file_dao::{
-    freeze, list_all_files_on_db, update_file_delete_status, CREATED, DELETED,
+    delete_file_db, freeze, list_all_files_on_db, update_file_delete_status, CREATED, DELETED,
 };
 use crate::service::file_service::calculate_file_hash;
 use crate::service::processors::processor_local_update::LocalUpdateProcessor;
@@ -114,6 +114,27 @@ pub async fn run_client(
                     }
                 }
             }
+
+            let all_db_files =
+                refresh_and_retrieve_all_db_files(&db_connection_mutex, &shared_directory);
+
+            all_db_files.iter().for_each(|file_db| {
+                if file_db.status == DELETED {
+                    request_for_del_record(&mut cloned_stream, &file_db.name);
+                    let result_del_record = extract_server_del_record_response(&mut cloned_stream);
+                    if result_del_record {
+                        println!("client: server deleted file successfully!");
+                        if delete_file_db(&mut db_connection_mutex.lock().unwrap(), &file_db.name) {
+                            println!("client: also client deleted record");
+                        } else {
+                            println!("client: ERROR deleting record");
+                        }
+                    } else {
+                        println!("client: ERROR server did not deleted file");
+                    }
+                }
+            });
+
             let result_shutdown = stream.shutdown(Shutdown::Both);
             if result_shutdown.is_err() {
                 println!("client: shutdown error: {:?}", result_shutdown.err());
@@ -126,6 +147,24 @@ pub async fn run_client(
             return true;
         }
     })
+}
+
+fn request_for_del_record(stream: &mut TcpStream, fname: &str) {
+    let msg = format!("del {}\r\n", fname);
+    let write_result = stream.write_all(msg.as_bytes());
+    if write_result.is_err() {
+        println!("client: error in writing request: {:?}", write_result.err());
+    }
+}
+
+pub fn extract_server_del_record_response(stream: &mut TcpStream) -> bool {
+    let mut response = String::new();
+    let mut buf_reader = BufReader::new(stream);
+    let read_result = buf_reader.read_line(&mut response);
+    if read_result.is_ok() && response.starts_with("OK") {
+        return true;
+    }
+    return false;
 }
 
 fn enstablish_connection(address: String, port: u16) -> Result<TcpStream, std::io::Error> {
@@ -274,7 +313,7 @@ fn override_file(buffer: Vec<u8>, shared_directory: &String, fname: String) {
     }
 }
 
-fn extract_file_from_stream(file_size: u64, stream: &mut TcpStream) -> Vec<u8> {
+pub fn extract_file_from_stream(file_size: u64, stream: &mut TcpStream) -> Vec<u8> {
     let mut buffer: Vec<u8> = vec![0; file_size.try_into().unwrap()];
     let read_result = stream.read_exact(&mut buffer);
     if read_result.is_ok() {

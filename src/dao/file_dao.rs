@@ -1,5 +1,7 @@
 use chrono::Utc;
-use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl, SqliteConnection};
+use diesel::{
+    insert_into, ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl, SqliteConnection,
+};
 
 use shariz::models::{FileDB, NewFileDB, UpdateFileDB};
 use shariz::schema::files::dsl::files;
@@ -20,6 +22,33 @@ pub fn list_all_files_on_db(connection: &mut SqliteConnection, all: bool) -> Vec
         .load::<FileDB>(connection)
         .expect("DB: Error loading files");
     return results;
+}
+
+pub fn find_file_on_db(connection: &mut SqliteConnection, fname: &str) -> Option<FileDB> {
+    let result = files
+        .filter(name.eq(fname))
+        .first::<FileDB>(connection)
+        .optional();
+    if result.is_err() {
+        return None;
+    }
+    return result.unwrap();
+}
+
+pub fn delete_file_db(connection: &mut SqliteConnection, fname: &str) -> bool {
+    let result = files
+        .filter(name.eq(fname))
+        .first::<FileDB>(connection)
+        .optional();
+    if result.is_err() {
+        return false;
+    }
+    let result = result.unwrap();
+    if result.is_none() {
+        return false;
+    }
+    let result = diesel::delete(&result.unwrap()).execute(connection);
+    return result.is_ok();
 }
 
 pub fn retrieve_file_hash_from_db(
