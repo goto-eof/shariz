@@ -89,7 +89,7 @@ pub async fn run_client(
                                 &shared_directory,
                             );
                         } else {
-                            println!("client: \ndeleted on client: {}\ndeleted on server: {}\nlast update on client: {}\nlast update on server: {}", file_on_db.status, file_on_server.1, file_db_last_update, file_on_server.2);
+                            println!("client: deleted on client: {} - deleted on server: {} - last update on client: {} - last update on server: {}", file_on_db.status, file_on_server.1, file_db_last_update, file_on_server.2);
                         }
                     } else {
                         if file_on_server.1 == CREATED {
@@ -249,11 +249,20 @@ fn request_for_file_list(stream: &mut TcpStream) {
 
 fn override_file(buffer: Vec<u8>, shared_directory: &String, fname: String) {
     let file_path = format!("{}/{}", shared_directory, fname);
-    println!("client: writing on file: {}", file_path);
-    let mut file = File::create(file_path).unwrap();
+    let file_tmp_path = format!("{}/{}.shariz", shared_directory, fname);
+    println!("client: writing on file: {}", file_tmp_path);
+    let mut file = File::create(&file_tmp_path).unwrap();
     let write_result = file.write_all(&buffer);
     if write_result.is_err() {
         println!("client: error writing file: {:?}", write_result.err());
+    } else {
+        let file_rename_result = fs::rename(file_tmp_path, file_path);
+        if file_rename_result.is_err() {
+            println!(
+                "client: error renaming file: {:?}",
+                file_rename_result.err()
+            );
+        }
     }
 }
 
