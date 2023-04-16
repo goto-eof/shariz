@@ -76,6 +76,7 @@ impl LocalUpdateProcessor {
             if !files_name_on_db.contains(&file_on_disk)
                 && !Path::new(&full_path).is_dir()
                 && !file_on_disk.eq(".DS_Store")
+                && !file_on_disk.ends_with(".shariz")
             {
                 let sha2 = calculate_file_hash(&full_path);
                 if sha2.is_none() {
