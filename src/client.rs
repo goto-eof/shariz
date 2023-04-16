@@ -126,6 +126,7 @@ pub async fn run_client(
                         println!("client: server deleted file successfully!");
                         if delete_file_db(&mut db_connection_mutex.lock().unwrap(), &file_db.name) {
                             println!("client: also client deleted record");
+                            x
                         } else {
                             println!("client: ERROR deleting record");
                         }
@@ -150,7 +151,7 @@ pub async fn run_client(
 }
 
 fn request_for_del_record(stream: &mut TcpStream, fname: &str) {
-    let msg = format!("del {}\r\n", fname);
+    let msg = format!("del;{}\r\n", fname);
     let write_result = stream.write_all(msg.as_bytes());
     if write_result.is_err() {
         println!("client: error in writing request: {:?}", write_result.err());
