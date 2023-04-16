@@ -41,6 +41,7 @@ impl CommandProcessor for DelProcessor {
 
         if file_on_db.is_none() {
             println!("server: file not found on db");
+            send_response(stream, "KO");
             return false;
         }
         let file_on_db = file_on_db.unwrap();
