@@ -52,18 +52,6 @@ impl CommandProcessor for DelProcessor {
                 println!("server: record and file deleted successfully");
                 send_response(stream, "OK");
                 return true;
-
-                // let result = fs::remove_file(fname);
-                // if result.is_err() {
-                //     println!("server: ERROR deleting file");
-                //     send_response(stream, "KO");
-                //     return false;
-
-                // } else {
-                //     println!("server: record and file deleted successfully");
-                //     send_response(stream, "OK");
-                //     return true;
-                // }
             } else {
                 println!("server: ERROR file not deleted");
                 send_response(stream, "KO");
