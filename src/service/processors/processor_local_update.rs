@@ -106,13 +106,13 @@ impl LocalUpdateProcessor {
                     );
                 }
             }
-            if file_on_db.status != DELETED {
-                let full_path = format!("{}/{}", search_directory, file_on_db.name);
-                let sha2 = calculate_file_hash(&full_path);
-                if sha2.is_some() {
-                    update_file_hash(connection, (&file_on_db.name).to_string(), sha2.unwrap());
-                }
-            }
+            // if file_on_db.status != DELETED {
+            //     let full_path = format!("{}/{}", search_directory, file_on_db.name);
+            //     let sha2 = calculate_file_hash(&full_path);
+            //     if sha2.is_some() {
+            //         update_file_hash(connection, (&file_on_db.name).to_string(), sha2.unwrap());
+            //     }
+            // }
         });
 
         return true;
