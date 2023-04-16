@@ -11,7 +11,7 @@ pub const CREATED: i32 = 0;
 pub fn list_all_files_on_db(connection: &mut SqliteConnection) -> Vec<FileDB> {
     let results = files
         .load::<FileDB>(connection)
-        .expect("Error loading posts");
+        .expect("DB: Error loading files");
     return results;
 }
 
