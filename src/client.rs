@@ -225,6 +225,7 @@ fn process_file(
     if opt_file_size_hash.is_none() {
         println!("client: sending ko (1)");
         send_ko(cloned_stream);
+        return;
     }
     let (file_size, file_hash) = opt_file_size_hash.unwrap();
     let (fname, file_to_save) = calculate_file_to_save(file.0.as_str(), shared_directory);
