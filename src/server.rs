@@ -51,6 +51,7 @@ pub async fn receive_data(
     while let Some(line) = lines.next() {
         if line.is_ok() {
             let line = line.unwrap();
+            println!("server: processing line: {}", line);
             let processors_result = processors.lock();
             if processors_result.is_err() {
                 println!("processors error: {:?}", processors_result.err());

@@ -89,7 +89,7 @@ pub async fn run_client(
                                 &shared_directory,
                             );
                         } else {
-                            println!("client: deleted on client: {} - deleted on server: {} - last update on client: {} - last update on server: {}", file_on_db.status, file_on_server.1, file_db_last_update, file_on_server.2);
+                            // println!("client: deleted on client: {} - deleted on server: {} - last update on client: {} - last update on server: {}", file_on_db.status, file_on_server.1, file_db_last_update, file_on_server.2);
                         }
                     } else {
                         if file_on_server.1 == CREATED {
