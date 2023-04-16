@@ -86,20 +86,20 @@ pub fn update_file_delete_status(
     return update_result.is_ok();
 }
 
-pub fn update_file_hash(connection: &mut SqliteConnection, fname: String, fsha2: String) -> bool {
-    let model_db = UpdateFileDB {
-        last_update: None,
-        sha2: Some(fsha2),
-        status: None,
-        frozen: None,
-    };
-    let update_result = diesel::update(files)
-        .filter(name.eq(&fname))
-        .set(model_db)
-        .execute(connection);
+// pub fn update_file_hash(connection: &mut SqliteConnection, fname: String, fsha2: String) -> bool {
+//     let model_db = UpdateFileDB {
+//         last_update: None,
+//         sha2: Some(fsha2),
+//         status: None,
+//         frozen: None,
+//     };
+//     let update_result = diesel::update(files)
+//         .filter(name.eq(&fname))
+//         .set(model_db)
+//         .execute(connection);
 
-    return update_result.is_ok();
-}
+//     return update_result.is_ok();
+// }
 
 pub fn insert_file(
     connection: &mut SqliteConnection,

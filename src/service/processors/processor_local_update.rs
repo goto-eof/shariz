@@ -1,7 +1,7 @@
 use crate::{
     dao::{
         self,
-        file_dao::{self, insert_file, update_file_delete_status, update_file_hash, DELETED},
+        file_dao::{self, insert_file, update_file_delete_status},
     },
     service::file_service::{calculate_file_hash, extract_fname},
     structures::command_processor::CommandProcessor,
