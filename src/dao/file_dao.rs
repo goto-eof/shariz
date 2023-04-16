@@ -8,7 +8,13 @@ use shariz::schema::files::{frozen, name, sha2};
 pub const DELETED: i32 = 1;
 pub const CREATED: i32 = 0;
 
-pub fn list_all_files_on_db(connection: &mut SqliteConnection) -> Vec<FileDB> {
+pub fn list_all_files_on_db(connection: &mut SqliteConnection, all: bool) -> Vec<FileDB> {
+    if all {
+        let results = files
+            .load::<FileDB>(connection)
+            .expect("DB: Error loading files");
+        return results;
+    }
     let results = files
         .filter(frozen.eq(0))
         .load::<FileDB>(connection)

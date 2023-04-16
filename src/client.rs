@@ -166,7 +166,7 @@ fn refresh_and_retrieve_all_db_files(
     if !result {
         panic!("client: unable to sync disk with db");
     }
-    list_all_files_on_db(&mut connection)
+    list_all_files_on_db(&mut connection, true)
 }
 
 fn process_file(
@@ -320,7 +320,11 @@ fn size_sha2_request(stream: &TcpStream) -> Option<(u64, String)> {
         .into_iter()
         .map(|item| item.to_string())
         .collect();
-    let file_size: u64 = buffer.get(0).unwrap().trim().parse().unwrap();
+    let file_size_result = buffer.get(0).unwrap().trim().parse();
+    if file_size_result.is_err() {
+        return None;
+    }
+    let file_size: u64 = file_size_result.unwrap();
     let file_hash = buffer.get(1).unwrap().trim();
     Some((file_size, file_hash.to_string()))
 }
