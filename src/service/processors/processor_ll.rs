@@ -1,13 +1,9 @@
+use crate::{dao::file_dao::list_all_files_on_db, structures::command_processor::CommandProcessor};
+use diesel::SqliteConnection;
 use std::{
     io::Write,
     net::TcpStream,
     sync::{Arc, Mutex},
-};
-
-use diesel::SqliteConnection;
-
-use crate::{
-    dao::file_db_dao::list_all_files_on_db, structures::command_processor::CommandProcessor,
 };
 
 pub struct LLProcessor {

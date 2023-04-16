@@ -1,12 +1,12 @@
 use crate::{
     dao::{
         self,
-        file_db_dao::{self, insert_file, update_file_delete_status, update_file_hash, DELETED},
+        file_dao::{self, insert_file, update_file_delete_status, update_file_hash, DELETED},
     },
     service::file_service::{calculate_file_hash, extract_fname},
     structures::command_processor::CommandProcessor,
 };
-use dao::file_db_dao::list_all_files_on_db;
+use dao::file_dao::list_all_files_on_db;
 use diesel::SqliteConnection;
 use std::{
     fs,
@@ -87,21 +87,21 @@ impl LocalUpdateProcessor {
         }
         files_on_db.iter().for_each(|file_on_db| {
             if !files_on_disk.contains(&file_on_db.name) {
-                if file_on_db.status == file_db_dao::CREATED {
+                if file_on_db.status == file_dao::CREATED {
                     println!("server: ----> delete {}", &file_on_db.name);
                     update_file_delete_status(
                         connection,
                         (&file_on_db.name).to_string(),
-                        file_db_dao::DELETED,
+                        file_dao::DELETED,
                     );
                 }
             } else {
-                if file_on_db.status == file_db_dao::DELETED {
+                if file_on_db.status == file_dao::DELETED {
                     println!("server: ----> undelete {}", &file_on_db.name);
                     update_file_delete_status(
                         connection,
                         (&file_on_db.name).to_string(),
-                        file_db_dao::CREATED,
+                        file_dao::CREATED,
                     );
                 }
             }

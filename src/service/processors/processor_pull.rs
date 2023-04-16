@@ -1,6 +1,6 @@
 use diesel::SqliteConnection;
 
-use crate::dao::file_db_dao::retrieve_file_hash_from_db;
+use crate::dao::file_dao::retrieve_file_hash_from_db;
 use crate::structures::command_processor::CommandProcessor;
 use std::str;
 use std::sync::{Arc, Mutex};
