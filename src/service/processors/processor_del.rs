@@ -1,12 +1,11 @@
-use diesel::{connection, SqliteConnection};
+use diesel::SqliteConnection;
 use shariz::models::FileDB;
 
 use crate::{
     dao::file_dao::{delete_file_db, find_file_on_db, DELETED},
-    structures::{command_processor::CommandProcessor, file},
+    structures::command_processor::CommandProcessor,
 };
 use std::{
-    fs,
     io::Write,
     net::TcpStream,
     sync::{Arc, Mutex},
@@ -34,7 +33,7 @@ impl CommandProcessor for DelProcessor {
             println!("server: invalid command 2: {}", full_command);
         }
         let filename = filename.unwrap();
-        let fname = format!("{}/{}", self.search_directory, filename);
+        // let fname = format!("{}/{}", self.search_directory, filename);
 
         let file_on_db: Option<FileDB> =
             find_file_on_db(&mut self.db_connection_mutex.lock().unwrap(), filename);
