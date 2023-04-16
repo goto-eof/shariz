@@ -214,7 +214,7 @@ fn extract_server_file_list(stream: &TcpStream) -> Vec<(String, i32, NaiveDateTi
         let result = response;
         let file_list = result.split(",");
         let file_list_vec = file_list.collect::<Vec<&str>>();
-        println!("client: result of ll command: {:?}", file_list_vec);
+        println!("client: result of ll command: {}", file_list_vec.len());
         if file_list_vec.len() == 1 && !file_list_vec.get(0).unwrap().contains(";") {
             return Vec::new();
         }
