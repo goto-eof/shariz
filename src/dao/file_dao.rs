@@ -45,9 +45,11 @@ pub fn delete_file_db(connection: &mut SqliteConnection, fname: &str) -> bool {
     }
     let result = result.unwrap();
     if result.is_none() {
+        println!("DB: file does not exists");
         return false;
     }
     let result = diesel::delete(&result.unwrap()).execute(connection);
+    println!("DB: deletion result: {}", result.is_ok());
     return result.is_ok();
 }
 
