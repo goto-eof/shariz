@@ -33,7 +33,6 @@ impl CommandProcessor for DelProcessor {
             println!("server: invalid command 2: {}", full_command);
         }
         let filename = filename.unwrap();
-        // let fname = format!("{}/{}", self.search_directory, filename);
 
         let file_on_db: Option<FileDB> =
             find_file_on_db(&mut self.db_connection_mutex.lock().unwrap(), filename);
