@@ -110,18 +110,3 @@ pub fn insert_file(
     println!("DB: inserted in db: {:?}=>{:?}", fname, result);
     return result.is_ok();
 }
-
-// pub fn freeze(connection: &mut SqliteConnection, fname: String, ffreeze: i32) -> bool {
-//     let model_db = UpdateFileDB {
-//         last_update: Some(Utc::now().naive_utc()),
-//         sha2: None,
-//         frozen: Some(ffreeze),
-//         status: None,
-//     };
-//     let update_result = diesel::update(files)
-//         .filter(name.eq(&fname))
-//         .set(model_db)
-//         .execute(connection);
-
-//     return update_result.is_ok();
-// }
