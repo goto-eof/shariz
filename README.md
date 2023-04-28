@@ -41,6 +41,8 @@ At startup Shariz loads the target server ip and port from the configuration fil
 sudo apt-get install libsqlite3-dev
 ```
 
+If you want to report a bug, please write here [here](http://andre-i.eu/#contactme).
+
 ```
 cargo install diesel_cli --no-default-features --features sqlite
 
