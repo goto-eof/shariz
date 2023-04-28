@@ -43,7 +43,7 @@ sudo apt-get install libsqlite3-dev
 
 If you want to report a bug, please write here [here](http://andre-i.eu/#contactme).
 cargo install diesel_cli --no-default-features --features sqlite
-
+```
 diesel migration run
 ```
 
@@ -51,3 +51,6 @@ diesel migration run
 # Tests
 
 I tested the application on a Mac and a Linux computer and it works fine (perhaps there are some bugs that I should fix).
+
+
+If you fount some bugs please report them [here](http://andre-i.eu/#contactme).
